@@ -18,8 +18,7 @@ window_manager/
 │       └── theme.py
 ├── models/                 # Modelos de datos
 │   ├── __init__.py
-│   └── window_data.py
-├── utils/                  # Utilidades
+│   └── window_data.py  
 │   ├── __init__.py
 │   └── helpers.py
 └── config/                 # Configuración
