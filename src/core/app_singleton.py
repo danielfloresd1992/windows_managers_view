@@ -1,8 +1,11 @@
 import os
 import sys
+from dotenv import load_dotenv
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import QObject
 
+
+load_dotenv()
 
 
 class AppSingleton(QObject):
@@ -13,31 +16,32 @@ class AppSingleton(QObject):
     _app = None
     _initialized = False
     
+
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(AppSingleton, cls).__new__(cls)
         return cls._instance
     
+
+
     @classmethod
     def initialize(cls, sys_argv=None):
-        """
-        Inicializar la QApplication (llamar SOLO desde main.py)
-        """
+       
         if cls._app is None:
             if sys_argv is None:
                 sys_argv = sys.argv
             cls._app = QApplication(sys_argv)
             
             # Configuración básica de la aplicación
-            cls._app.setApplicationName("Window Manager Pro")
-            cls._app.setApplicationVersion("1.0.0")
-            cls._app.setOrganizationName("Tu Empresa")
+            cls._app.setApplicationName(os.getenv('name_project'))
+            cls._app.setApplicationVersion(os.getenv('version'))
+            cls._app.setOrganizationName(os.getenv('name_company'))
             cls._app.setQuitOnLastWindowClosed(True)
             
             cls._initialized = True
-            print("✅ QApplication inicializada como singleton")
-        
         return cls._app
+    
     
     
     @classmethod
