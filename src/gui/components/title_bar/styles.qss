@@ -1,0 +1,40 @@
+/* Barra de título */
+
+
+#title_bar {
+    background-color: #181818;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+/* Texto del título */
+QLabel#title_label {
+    color: white;
+    font-weight: bold;
+    font-size: 12px;
+    padding-left: 12px;
+}
+
+/* Botones de control */
+QPushButton#MinimizeButton,
+QPushButton#MaximizeButton,
+QPushButton#CloseButton {
+    border: none;
+    background-color: #000000;
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+    padding: 0px 8px;
+    width: 35px;
+    height: 35px;
+}
+
+/* Hover states */
+QPushButton#MinimizeButton:hover,
+QPushButton#MaximizeButton:hover {
+    background-color: #34495e;
+}
+
+QPushButton#CloseButton:hover {
+    background-color: #e74c3c;
+}

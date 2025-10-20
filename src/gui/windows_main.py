@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel, QPushButton, QSizePolicy
 from PySide6.QtCore import Qt
 from core.app_singleton import AppSingleton
-from gui.components.window_bar import CustomTitleBar
+from gui.components.title_bar.window_bar import CustomTitleBar
 
 
 
@@ -13,18 +13,19 @@ class MainWindow(QMainWindow):
         self.setWindowFlag(Qt.FramelessWindowHint)
         self.setup_ui()
         self.center_windows()
-        self.setStyleSheet("background-color: #000000;")
+    
 
     
     def setup_ui(self):
 
         self.resize(800,600)
-        self.title_bar = CustomTitleBar(self)
+
+        
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
 
 
-        main_layout = QVBoxLayout(self)
+        main_layout = QVBoxLayout(central_widget)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
@@ -32,6 +33,7 @@ class MainWindow(QMainWindow):
         # Barra de título personalizada
         self.title_bar = CustomTitleBar(self)
         main_layout.addWidget(self.title_bar)
+
         
         # Contenido principal
         self.content_widget = QWidget()
