@@ -21,29 +21,33 @@ class MainWindow(QMainWindow):
         self.resize(800,600)
 
         
+        # CONTENEDOR PRINCIPAL
         central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-
-
         main_layout = QVBoxLayout(central_widget)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
 
-        # Barra de título personalizada
+
+        # BARRA DE TÍTULO PERSONALIZADA
         self.title_bar = CustomTitleBar(self)
         main_layout.addWidget(self.title_bar)
 
-        
-        # Contenido principal
-        self.content_widget = QWidget()
-        self.content_widget.setStyleSheet("background-color: #ecf0f1;")
-        self.content_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        main_layout.addWidget(self.content_widget)
-        
-        # Configurar contenido interno
-        content_layout = QVBoxLayout(self.content_widget)
-        content_layout.addWidget(QLabel("Contenido principal de la aplicación - Layout al 100%"))
+
+        self.setCentralWidget(central_widget)
+
+        content_center = QWidget()
+        content_layaut = QVBoxLayout(content_center)
+
+        title_main = QLabel("Ventana Principal")
+        title_main.setAlignment(Qt.AlignCenter)
+
+        content_layaut.addWidget(title_main)
+
+
+        main_layout.addWidget(content_center)
+        content_center.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+    
         
         # Estilo para la ventana
         self.setStyleSheet("""

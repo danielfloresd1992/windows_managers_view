@@ -24,6 +24,7 @@ class CustomTitleBar(QWidget):
         self.setAttribute(Qt.WA_StyledBackground, True)
 
 
+
     def setup_ui(self, parent):
 
         self.setObjectName('title_bar')
@@ -35,6 +36,8 @@ class CustomTitleBar(QWidget):
         layout.setObjectName('layout_title_bar')
         layout.setContentsMargins(0, 0, 5, 0)
         layout.setSpacing(0)
+   
+
 
         self.title = QLabel(f'{os.getenv('name_project', 'App')} {os.getenv('version', '1.0')}')
         self.title.setObjectName('title_label')
@@ -69,7 +72,7 @@ class CustomTitleBar(QWidget):
 
     def toggle_maximize_restore(self):
         """Alterna entre maximizar y restaurar la ventana"""
-        parent = self.parent()
+        parent = self.parent().parent()
         if parent.isMaximized():
             parent.showNormal()
         else:
@@ -121,3 +124,11 @@ class CustomTitleBar(QWidget):
         if os.path.exists(qss_path):
             with open(qss_path, 'r') as f:
                 self.setStyleSheet(f.read())
+
+
+    
+    def mouseDoubleClickEvent(self, event: QMouseEvent):
+        """Maximiza/restaura con doble click"""
+        if event.button() == Qt.LeftButton:
+            self.toggle_maximize_restore()
+            event.accept()
