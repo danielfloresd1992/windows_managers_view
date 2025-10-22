@@ -23,4 +23,7 @@ window_manager/
 │   └── helpers.py
 └── config/                 # Configuración
     ├── __init__.py
-    └── settings.py
+    └── settings.py.
+
+
+    https://dribbble.com/shots/25543032-Sidebar-Design-Dark-mode
