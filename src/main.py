@@ -85,6 +85,7 @@ if __name__ == '__main__':  # FUNCTION MAIN
 
 
     check_admin_privileges(show_error)
+    
     list_windows = show_list_windows()
     windows_seleted = None
 
@@ -93,22 +94,21 @@ if __name__ == '__main__':  # FUNCTION MAIN
     TIME_PER_FRAME = 1.0 / TARGET_FPS
     
 
+
+
     for windows in list_windows:
-        
         if(windows['title'] == 'iVMS-4200'):
 
             window = windows
             windows_seleted  = window['hwnd']
             hwnd_seleted = window['hwnd']
-            """
+            
             set_window_always_on_top( hwnd_seleted)
             buffer_image = capture_window_by_hwnd(hwnd_seleted)
             buffer_image.show()
-            """
+        
 
-   
-
-    """
+    
     while True:
         start_time = time.time()
         set_window_always_on_top(windows_seleted)
@@ -125,5 +125,5 @@ if __name__ == '__main__':  # FUNCTION MAIN
             break
 
     cv2.destroyAllWindows()
-     """
+    
             
