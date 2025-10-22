@@ -12,7 +12,7 @@ class SplashScreen(QSplashScreen):
         pixmap = QPixmap(600, 400)
         pixmap.fill(QColor("#222222"))  # Fondo gris exacto
 
-        print(image_path)
+
         if image_path and os.path.exists(image_path):
             logo = QPixmap(image_path)
             logo_scaled = logo.scaled(200, 200, Qt.KeepAspectRatio, Qt.SmoothTransformation)

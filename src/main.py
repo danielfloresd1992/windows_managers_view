@@ -3,6 +3,7 @@ import win32ui
 import win32con
 import sys
 import cv2
+import os
 import numpy as np
 from PIL import Image
 import time
@@ -34,11 +35,27 @@ from PySide6.QtGui import QPixmap
 
 
 
+        
+def load_stylesheet():
+    qss_path = os.path.join(os.path.dirname(__file__), 'gui\styles\global.qss')
+
+    if os.path.exists(qss_path):
+        print('Loading stylesheet from:', qss_path)
+        with open(qss_path, 'r') as f:
+            return f.read()
+    else: print('Stylesheet file not found:', qss_path)
+
+
+
+
+
 
 def main():
     try:
 
         app = AppSingleton.initialize(sys.argv)
+        app.setStyleSheet(load_stylesheet())
+
         splashScreen = SplashScreen()
         splashScreen.show()
 
@@ -46,8 +63,6 @@ def main():
         
 
        
-
-
        
         windowsPrincipal.show()
         splashScreen.finish(windowsPrincipal)

@@ -29,7 +29,6 @@ class CustomTitleBar(QWidget):
 
         self.setObjectName('title_bar')
         self.setFixedHeight(40)
-        
 
         
         layout = QHBoxLayout(self)

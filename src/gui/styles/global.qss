@@ -1,0 +1,32 @@
+
+
+
+QMainWindow {
+    background-color: #000000;
+}
+
+
+QLabel{
+    color: #ecf0f1;
+    font-size: 14px;
+}
+
+
+#title_semibold{
+    font-weight: bold;
+}
+
+
+
+QWidget#SidebarDock {
+   background-color: #252525;
+}
+
+
+QWidget#Head {
+   background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0 #333333, stop:1 #292929
+    );
+    border-bottom: 1px solid #333333;
+}
