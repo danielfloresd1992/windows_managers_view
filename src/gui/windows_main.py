@@ -6,6 +6,8 @@ from core.app_singleton import AppSingleton
 from gui.components.title_bar.window_bar import CustomTitleBar
 from gui.components.sidebar.sidebar_dock import Sidebar_Dock
 
+from core.window_global import windowGlobals
+
 
 class MainWindow(QMainWindow):
 
@@ -35,7 +37,7 @@ class MainWindow(QMainWindow):
 
         # DECLARACIÓN DE COMPONENTES PRINCIPALES
         self.title_bar = CustomTitleBar(self)
-        asidebar = Sidebar_Dock(self, title='Ventanas disponibles', src_ico='src/resources/ico.png')
+        asidebar = Sidebar_Dock(self, title='Ventanas disponibles', src_ico='src/resources/ico.png', window_globals=windowGlobals)
 
 
 

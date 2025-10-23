@@ -4,16 +4,18 @@ from PySide6.QtGui import QPixmap
 
 
 
+
+
 class Sidebar_Dock(QWidget):
      
      
     countChanged = Signal(int)
 
 
-    def __init__(self, parent=None, title='Panel Lateral', src_ico='src/resources/ico.png'):
+    def __init__(self, parent=None, title='Panel Lateral', src_ico='src/resources/ico.png', window_globals=None):
         super().__init__(parent)
 
-        self._count = 0
+        self.windows = window_globals
 
         self.ico=src_ico
         self.title=title
