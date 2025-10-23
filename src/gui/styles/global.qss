@@ -1,9 +1,54 @@
 
 
 
-QMainWindow {
+QMainWindow{
     background-color: #000000;
 }
+
+ScrollAreaSidebar{
+    border: none
+}
+
+/* ------------------------------ */
+    /* 1. ESTILO DE LA PISTA (TRACK)  */
+    /* ------------------------------ */
+    QScrollBar:vertical {
+        border: none;
+        background: #000000; /* Fondo detrás del 'pulgar' */
+        width: 10px;        /* Ancho de la barra */
+        margin: 0px;        /* Sin margen */
+    }
+
+    /* ---------------------------------------------------- */
+    /* 2. ESTILO DEL 'PULGAR' (HANDLE o Control Deslizable) */
+    /* ---------------------------------------------------- */
+    QScrollBar::handle:vertical {
+        background: rgba(90, 90, 90, 1);     /* Color gris/azul del pulgar */
+        min-height: 20px;     /* Asegura que el pulgar sea visible */
+        border-radius: 5px;   /* Bordes redondeados */
+    }
+    
+    /* Efecto hover */
+    QScrollBar::handle:vertical:hover {
+        background: rgba(90, 90, 90, 1); /* Color más oscuro al pasar el mouse */
+    }
+
+    /* ------------------------------------- */
+    /* 3. OCULTAR BOTONES DE FLECHA (opcional) */
+    /* ------------------------------------- */
+    QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+        border: none;
+        background: none;
+        height: 0px; /* Elimina el espacio de los botones */
+    }
+
+
+#ContentSidebar {
+        border: 2px solid #000000;  /* Borde alrededor del área visible */
+        background-color: #000000; /* Fondo del área de contenido */
+}
+
+
 
 
 QLabel{

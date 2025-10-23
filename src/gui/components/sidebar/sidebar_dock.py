@@ -1,27 +1,26 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout,QHBoxLayout, QLabel, QPushButton
-from PySide6.QtCore import Qt, Property, Signal
+from PySide6.QtWidgets import QWidget, QVBoxLayout,QHBoxLayout, QLabel, QScrollArea
+from PySide6.QtCore import Qt, Slot
 from PySide6.QtGui import QPixmap
+from core.window_global import windows_monitor
 
 
+from core.capture_exaple import capture_window_by_hwnd, pil_image_to_png_bytes
+from core.window_controller import set_window_always_on_top
 
 
 
 class Sidebar_Dock(QWidget):
      
      
-    countChanged = Signal(int)
-
-
-    def __init__(self, parent=None, title='Panel Lateral', src_ico='src/resources/ico.png', window_globals=None):
+   
+    def __init__(self, parent=None, title='Panel Lateral', src_ico='src/resources/ico.png'):
         super().__init__(parent)
 
-        self.windows = window_globals
 
         self.ico=src_ico
         self.title=title
         self.setup_ui()
-        self.countChanged.connect(self._on_count_changed)
-            
+ 
             
     
     def setup_ui(self):
@@ -55,64 +54,74 @@ class Sidebar_Dock(QWidget):
         header_layaut.addWidget(img_image)
         header_layaut.addWidget(text_title)
 
-
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setAttribute(Qt.WA_StyledBackground, True)
+        self.scroll_area.setObjectName('ScrollAreaSidebar')
+        # Opcional pero recomendado: Hace que el scroll area ocupe todo el espacio disponible
+        self.scroll_area.setWidgetResizable(True)
 
         content_center = QWidget()
-        content_layaut = QVBoxLayout(content_center)
-
-        self.text_content = QLabel(f'Contador: {self.count}')
-        self.text_content.setAlignment(Qt.AlignCenter)
-
-        content_btn = QWidget()
-        content_btn_layaut = QHBoxLayout(content_btn)
-
-
-        sustraccion_btn = QPushButton('Sustraer')
-        sustraccion_btn.setObjectName('btn_primary')
-        sustraccion_btn.clicked.connect(self.sub_count)
-        content_btn_layaut.addWidget(sustraccion_btn)
-
-
-        addition_btn = QPushButton('Agregar')
-        addition_btn.setObjectName('btn_primary')
-        addition_btn.clicked.connect(self.add_count)
-        content_btn_layaut.addWidget(addition_btn)
-
-      
-
-
-    
-
-        content_layaut.addWidget(self.text_content)
-        content_layaut.addWidget(content_btn)
+        content_center.setAttribute(Qt.WA_StyledBackground, True)
+        content_center.setObjectName('ContentSidebar')
+        self.content_layaut = QVBoxLayout(content_center)
+        self.content_layaut.setAlignment(Qt.AlignTop| Qt.AlignHCenter)
+        self.scroll_area.setWidget(content_center)
 
         layout_dock.addWidget(header, alignment=Qt.AlignTop)
-        layout_dock.addWidget(content_center)
+        layout_dock.addWidget(self.scroll_area)
+
+        windows_monitor.windows_event_detected.connect(self.update_list)
+        self.update_list(windows_monitor.show_windows)
 
 
 
-    @Property(int, notify=countChanged)
-    def count(self):
-        return self._count
-    
-    @count.setter
-    def count(self, value):
-        if self._count != value:  # Solo actualizar si cambió
-            self._count = value
-            self.countChanged.emit(value)  # ¡Esto hace que sea reactivo!
+    def show_list(self):
+        print(windows_monitor.show_windows)
+
+
+    @Slot(list)
+    def update_list(self, list_windows):
+        
+        if(list_windows):
+
+            # LIMPIA LA LISTA ANTERIOR
+            for i in reversed(range(self.content_layaut.count())):
+                widget_to_remove = self.content_layaut.itemAt(i).widget()
+                self.content_layaut.removeWidget(widget_to_remove)
+                widget_to_remove.setParent(None)
+
+
+            # AGREGA LOS NUEVOS ELEMENTOS
+            for window in list_windows:
+
+                set_window_always_on_top(window['hwnd'])
+                image_buffer = capture_window_by_hwnd(window['hwnd'])
+                image_png = pil_image_to_png_bytes( image_buffer)
+
+                if(image_png):
+                    pixmap = QPixmap()
+                    pixmap.loadFromData(image_png, 'png')
+                    
+                    # ------------------------------------------------------------------
+                    # CAMBIO CLAVE: Aplicar escalado absoluto a 230x200
+                    # Usamos Qt.IgnoreAspectRatio para forzar el tamaño exacto, 
+                    # ignorando la relación de aspecto original de la captura.
+                    # ------------------------------------------------------------------
+                    
+                    # Nuevo alto: 200 (en lugar de 180)
+                    width = 180
+                    height = 140 
+                    
+                    pixmap = pixmap.scaled(
+                        width, 
+                        height, 
+                        Qt.IgnoreAspectRatio,  # <-- Fuerza el tamaño exacto
+                        Qt.SmoothTransformation  # <-- Mejora la calidad visual del escalado
+                    )
+                    
+                    image_label = QLabel()
+                    image_label.setPixmap(pixmap)
+                    self.content_layaut.addWidget(image_label)
 
 
 
-    def add_count(self):
-        self.count +=1
-       
-
-    def sub_count(self):
-        self.count -=1
-
-
-
-    def _on_count_changed(self, value):
-        """Se llama automáticamente cuando count cambia - similar a useEffect"""
-        self.text_content.setText(f'Contador: {value}')
-        print(f'El contador es: {value}')

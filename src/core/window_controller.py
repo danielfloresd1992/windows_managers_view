@@ -184,6 +184,8 @@ def set_window_always_on_top(hwnd):
 
 
 
+
+
 def lock_window_position(hwnd, lock=True):
     """
     Bloquear/desbloquear la posición y tamaño de una ventana

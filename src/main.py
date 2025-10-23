@@ -81,10 +81,8 @@ def main():
 
 
 if __name__ == '__main__':  # FUNCTION MAIN
+
     sys.exit(main())
-
-
-    check_admin_privileges(show_error)
     
     list_windows = show_list_windows()
     windows_seleted = None
@@ -102,14 +100,14 @@ if __name__ == '__main__':  # FUNCTION MAIN
             window = windows
             windows_seleted  = window['hwnd']
             hwnd_seleted = window['hwnd']
-            
+        
             set_window_always_on_top( hwnd_seleted)
             buffer_image = capture_window_by_hwnd(hwnd_seleted)
-            buffer_image.show()
+            buffer_image.save()
         
 
     
-    while True:
+    while False:
         start_time = time.time()
         set_window_always_on_top(windows_seleted)
         buffer_image = capture_window_by_hwnd(windows_seleted)
@@ -125,5 +123,7 @@ if __name__ == '__main__':  # FUNCTION MAIN
             break
 
     cv2.destroyAllWindows()
+
+   
     
             

@@ -4,11 +4,15 @@ import win32con
 from PIL import Image
 import ctypes
 from ctypes import wintypes
+import io
+
+
 
 # Configurar PrintWindow
 PrintWindow = ctypes.windll.user32.PrintWindow
 PrintWindow.argtypes = [wintypes.HWND, wintypes.HDC, wintypes.UINT]
 PrintWindow.restype = wintypes.BOOL
+
 
 def capture_window_by_hwnd(hwnd):
     """
@@ -76,4 +80,28 @@ def capture_window_by_hwnd(hwnd):
             
     except Exception as e:
         print(f"💥 Error capturando ventana: {e}")
+        return None
+    
+
+
+
+
+
+def pil_image_to_png_bytes(imagen_pil):
+    try:
+        buffer = io.BytesIO()
+
+        # 3. Guardar la imagen PIL en el buffer de memoria en formato PNG
+        #    Esto codifica la imagen como bytes PNG.
+        imagen_pil.save(buffer, format="PNG")
+        
+        # 4. Obtener los bytes codificados
+        png_bytes = buffer.getvalue()
+        buffer.close()
+        
+        # 5. Cargar los bytes PNG en QPixmap
+        return png_bytes
+
+    except Exception as e:
+        print(f"💥 Error al convertir la imagen a QPixmap: {e}")
         return None
