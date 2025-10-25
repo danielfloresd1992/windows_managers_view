@@ -22,20 +22,22 @@ from core.run_controller import check_admin_privileges
 from core.window_controller import activate_window, set_window_always_on_top, lock_window_position, send_text_to_window
 from core.app_singleton import  AppSingleton
 
-from utils.files.print_png import buffer_to_png
+
 ### COMPONENTS AND UI
 ##from gui.components.modal_msm import ModalDialog
 ##from gui.windows_main import MainWindow
-from gui.components.SplashScreen import SplashScreen
-from PySide6.QtWidgets import QSplashScreen
-from gui.windows_main import MainWindow 
 
 from PySide6.QtGui import QPixmap
+from PySide6.QtWidgets import QSplashScreen, QLabel
+from PySide6.QtCore import Qt
 
-
+from gui.windows_main import MainWindow 
+from gui.components.SplashScreen import SplashScreen
+from gui.components.sidebar.sidebar_dock import Sidebar_Dock
 
 
         
+
 def load_stylesheet():
     qss_path = os.path.join(os.path.dirname(__file__), 'gui\styles\global.qss')
 
@@ -49,10 +51,8 @@ def load_stylesheet():
 
 
 
-
 def main():
     try:
-
         app = AppSingleton.initialize(sys.argv)
         app.setStyleSheet(load_stylesheet())
 
@@ -60,9 +60,16 @@ def main():
         splashScreen.show()
 
         windowsPrincipal = MainWindow()
-        
+        asidebar = Sidebar_Dock(windowsPrincipal, title='Ventanas disponibles', src_ico='src/resources/ico.png')
 
-       
+
+        title_main = QLabel("Ventana Principal")
+        title_main.setAlignment(Qt.AlignCenter)
+
+        windowsPrincipal.add_center(asidebar)
+        windowsPrincipal.content_layaut.addWidget(title_main)
+        
+        
        
         windowsPrincipal.show()
         splashScreen.finish(windowsPrincipal)
@@ -82,48 +89,10 @@ def main():
 
 if __name__ == '__main__':  # FUNCTION MAIN
 
+    list_windows = show_list_windows()
     sys.exit(main())
     
-    list_windows = show_list_windows()
-    windows_seleted = None
-
-    TARGET_FPS = 30
-    # 2. Calcular el tiempo que debe durar cada fotograma (en segundos)
-    TIME_PER_FRAME = 1.0 / TARGET_FPS
     
 
 
-
-    for windows in list_windows:
-        if(windows['title'] == 'iVMS-4200'):
-
-            window = windows
-            windows_seleted  = window['hwnd']
-            hwnd_seleted = window['hwnd']
-        
-            set_window_always_on_top( hwnd_seleted)
-            buffer_image = capture_window_by_hwnd(hwnd_seleted)
-            buffer_image.save()
-        
-
-    
-    while False:
-        start_time = time.time()
-        set_window_always_on_top(windows_seleted)
-        buffer_image = capture_window_by_hwnd(windows_seleted)
-
-        if buffer_image is not None:
-
-            frame_rgb = np.array(buffer_image)
-
-            frame_bgr = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
-            cv2.imshow('Ventana de Captura', frame_bgr)
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-    cv2.destroyAllWindows()
-
-   
-    
-            
+ 

@@ -3,9 +3,8 @@ from PySide6.QtCore import Qt, Slot
 from PySide6.QtGui import QPixmap
 from core.window_global import windows_monitor
 
+from gui.components.box_image import Box_cap
 
-from core.capture_exaple import capture_window_by_hwnd, pil_image_to_png_bytes
-from core.window_controller import set_window_always_on_top
 
 
 
@@ -93,35 +92,6 @@ class Sidebar_Dock(QWidget):
 
             # AGREGA LOS NUEVOS ELEMENTOS
             for window in list_windows:
-
-                set_window_always_on_top(window['hwnd'])
-                image_buffer = capture_window_by_hwnd(window['hwnd'])
-                image_png = pil_image_to_png_bytes( image_buffer)
-
-                if(image_png):
-                    pixmap = QPixmap()
-                    pixmap.loadFromData(image_png, 'png')
-                    
-                    # ------------------------------------------------------------------
-                    # CAMBIO CLAVE: Aplicar escalado absoluto a 230x200
-                    # Usamos Qt.IgnoreAspectRatio para forzar el tamaño exacto, 
-                    # ignorando la relación de aspecto original de la captura.
-                    # ------------------------------------------------------------------
-                    
-                    # Nuevo alto: 200 (en lugar de 180)
-                    width = 180
-                    height = 140 
-                    
-                    pixmap = pixmap.scaled(
-                        width, 
-                        height, 
-                        Qt.IgnoreAspectRatio,  # <-- Fuerza el tamaño exacto
-                        Qt.SmoothTransformation  # <-- Mejora la calidad visual del escalado
-                    )
-                    
-                    image_label = QLabel()
-                    image_label.setPixmap(pixmap)
-                    self.content_layaut.addWidget(image_label)
-
-
+               
+                self.content_layaut.addWidget(Box_cap(window['hwnd']))
 

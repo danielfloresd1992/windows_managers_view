@@ -4,7 +4,7 @@ from PySide6.QtCore import Qt
 from core.app_singleton import AppSingleton
 
 from gui.components.title_bar.window_bar import CustomTitleBar
-from gui.components.sidebar.sidebar_dock import Sidebar_Dock
+
 
 
 
@@ -37,34 +37,27 @@ class MainWindow(QMainWindow):
 
         # DECLARACIÓN DE COMPONENTES PRINCIPALES
         self.title_bar = CustomTitleBar(self)
-        asidebar = Sidebar_Dock(self, title='Ventanas disponibles', src_ico='src/resources/ico.png')
-
-
-
-
     
 
         self.setCentralWidget(central_widget)
         content_center = QWidget()
-        content_layaut = QHBoxLayout(content_center)
+        self.content_layaut = QHBoxLayout(content_center)
 
-        title_main = QLabel("Ventana Principal")
-        title_main.setAlignment(Qt.AlignCenter)
+        
 
        
         content_center.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
 
-
-        content_layaut.addWidget(asidebar)
-        content_layaut.addWidget(title_main)
-
         #INTRIDUCIÓN DE COMPÓNENTES PRNCIPALES
         main_layout.addWidget(self.title_bar)
         main_layout.addWidget(content_center)
 
+
    
-    
+    def add_center(self, component):
+        self.content_layaut.addWidget(component)
+
         
 
 
