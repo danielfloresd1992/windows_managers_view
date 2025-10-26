@@ -1,19 +1,16 @@
-import win32gui
-import win32ui
-import win32con
 import sys
 import cv2
 import os
 import numpy as np
 from PIL import Image
-import time
+
 
 
 
 
 
 ### MODELS AND DATA
-from model.windows.list_windows import show_list_windows
+from model.windows.list_windows import open_windows_windows
 
 
 ###    CONTROLLER AND LOGIC
@@ -33,6 +30,7 @@ from PySide6.QtCore import Qt
 
 from gui.windows_main import MainWindow 
 from gui.components.SplashScreen import SplashScreen
+from  gui.components.conten_center.center_layaut import Layaut_center
 from gui.components.sidebar.sidebar_dock import Sidebar_Dock
 
 
@@ -60,14 +58,15 @@ def main():
         splashScreen.show()
 
         windowsPrincipal = MainWindow()
+
         asidebar = Sidebar_Dock(windowsPrincipal, title='Ventanas disponibles', src_ico='src/resources/ico.png')
+        asidebar.print_list(open_windows_windows())
+        layaut_center = Layaut_center()
+        
 
-
-        title_main = QLabel("Ventana Principal")
-        title_main.setAlignment(Qt.AlignCenter)
 
         windowsPrincipal.add_center(asidebar)
-        windowsPrincipal.content_layaut.addWidget(title_main)
+        windowsPrincipal.content_layaut.addWidget(layaut_center)
         
         
        
@@ -89,10 +88,4 @@ def main():
 
 if __name__ == '__main__':  # FUNCTION MAIN
 
-    list_windows = show_list_windows()
     sys.exit(main())
-    
-    
-
-
- 

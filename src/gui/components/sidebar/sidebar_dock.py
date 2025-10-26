@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout,QHBoxLayout, QLabel, QScrollArea
 from PySide6.QtCore import Qt, Slot
 from PySide6.QtGui import QPixmap
+
 from core.window_global import windows_monitor
 
 from gui.components.box_image import Box_cap
@@ -19,8 +20,7 @@ class Sidebar_Dock(QWidget):
         self.ico=src_ico
         self.title=title
         self.setup_ui()
- 
-            
+      
     
     def setup_ui(self):
         self.setObjectName('SidebarDock')
@@ -69,29 +69,15 @@ class Sidebar_Dock(QWidget):
         layout_dock.addWidget(header, alignment=Qt.AlignTop)
         layout_dock.addWidget(self.scroll_area)
 
-        windows_monitor.windows_event_detected.connect(self.update_list)
-        self.update_list(windows_monitor.show_windows)
 
 
 
-    def show_list(self):
-        print(windows_monitor.show_windows)
 
-
-    @Slot(list)
-    def update_list(self, list_windows):
+    
+    def print_list(self, list_windows):
         
         if(list_windows):
-
-            # LIMPIA LA LISTA ANTERIOR
-            for i in reversed(range(self.content_layaut.count())):
-                widget_to_remove = self.content_layaut.itemAt(i).widget()
-                self.content_layaut.removeWidget(widget_to_remove)
-                widget_to_remove.setParent(None)
-
-
-            # AGREGA LOS NUEVOS ELEMENTOS
             for window in list_windows:
-               
-                self.content_layaut.addWidget(Box_cap(window['hwnd']))
+                self.content_layaut.addWidget(Box_cap(window))
+
 

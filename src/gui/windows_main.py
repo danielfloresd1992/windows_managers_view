@@ -1,4 +1,3 @@
-import os
 from PySide6.QtWidgets import QApplication, QMainWindow, QHBoxLayout, QWidget, QVBoxLayout, QLabel, QPushButton, QSizePolicy
 from PySide6.QtCore import Qt
 from core.app_singleton import AppSingleton

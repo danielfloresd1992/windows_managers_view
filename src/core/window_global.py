@@ -1,5 +1,8 @@
-from PySide6.QtCore import QObject, Signal, QThread, Property
 import win32gui
+import win32process
+
+
+from PySide6.QtCore import QObject, Signal, QThread, Property
 from core.windows_detector import WindowScannerThread
 
 
@@ -18,13 +21,17 @@ class Windows_monitor(QObject):
 
 
 
-        # Señal antigua (para notificar que la lista completa ha cambiado)
+    # Señal antigua (para notificar que la lista completa ha cambiado)
     windows_event_detected = Signal(list) 
+
+
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super(Windows_monitor, cls).__new__(cls)
         return cls._instance
+
+
 
     def __init__(self, parent=None, main_window=None):
         if not hasattr(self, '_initialized'):
