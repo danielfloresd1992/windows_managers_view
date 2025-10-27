@@ -63,7 +63,7 @@ QLabel{
 
 
 
-QWidget#SidebarDock {
+QWidget#SidebarDock, #bar-btn-center {
    background-color: #252525;
 }
 

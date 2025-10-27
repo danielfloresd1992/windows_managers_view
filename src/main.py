@@ -61,7 +61,7 @@ def main():
 
         asidebar = Sidebar_Dock(windowsPrincipal, title='Ventanas disponibles', src_ico='src/resources/ico.png')
         asidebar.print_list(open_windows_windows())
-        layaut_center = Layaut_center()
+        layaut_center = Layaut_center(frames_per_milliseconds=30)
         
 
 
@@ -69,7 +69,6 @@ def main():
         windowsPrincipal.content_layaut.addWidget(layaut_center)
         
         
-       
         windowsPrincipal.show()
         splashScreen.finish(windowsPrincipal)
 

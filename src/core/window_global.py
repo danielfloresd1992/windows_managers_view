@@ -19,11 +19,8 @@ class Windows_monitor(QObject):
     # Señal antigua (para notificar que la lista completa ha cambiado)
     windows_event_detected = Signal(list) 
 
-
-
     # Señal antigua (para notificar que la lista completa ha cambiado)
     windows_event_detected = Signal(list) 
-
 
 
     def __new__(cls, *args, **kwargs):

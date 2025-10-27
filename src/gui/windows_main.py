@@ -15,7 +15,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setObjectName('MainWindowStyle')
         self.setAttribute(Qt.WA_StyledBackground, True)
-        self.setWindowFlag(Qt.FramelessWindowHint)
+        self.setWindowFlag(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         self.setup_ui()
         self.center_windows()
     
