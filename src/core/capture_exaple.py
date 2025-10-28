@@ -87,13 +87,14 @@ def capture_window_by_hwnd(hwnd):
 
 
 
-def pil_image_to_png_bytes(imagen_pil):
+def pil_image_to_png_bytes(imagen_pil, format="PNG", quality=None):
     try:
         buffer = io.BytesIO()
 
         # 3. Guardar la imagen PIL en el buffer de memoria en formato PNG
         #    Esto codifica la imagen como bytes PNG.
-        imagen_pil.save(buffer, format="PNG")
+        is_quality = quality if quality else None
+        imagen_pil.save(buffer, format=format, quality=is_quality)
         
         # 4. Obtener los bytes codificados
         png_bytes = buffer.getvalue()

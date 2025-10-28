@@ -50,6 +50,29 @@ ScrollAreaSidebar{
 
 
 
+#bar_options{
+    padding: 0px;
+    margin: 0px;
+    border: none;
+}
+#text-fps{
+    color:#fe0;
+    font-weight: bold;
+}
+#btn-bar{
+    min-width: 30px;
+    min-height: 30px;
+    max-width: 30px;
+    max-height: 30px;
+    padding: 0px;
+    margin: 5px;
+    font-size: 14px;
+    font-weight: bold;
+    background-color: #00dddddd;
+    border: 1px solid #dadada;
+    color: #ffffff;
+}
+
 
 QLabel{
     color: #ecf0f1;
@@ -63,7 +86,7 @@ QLabel{
 
 
 
-QWidget#SidebarDock, #bar-btn-center {
+QWidget#SidebarDock, #bar_options {
    background-color: #252525;
 }
 
