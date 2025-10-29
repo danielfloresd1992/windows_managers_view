@@ -30,7 +30,7 @@ from PySide6.QtCore import Qt
 
 from gui.windows_main import MainWindow 
 from gui.components.SplashScreen import SplashScreen
-from  gui.components.conten_center.center_layaut import Layaut_center
+from gui.components.render_box.render_box import Layaut_center
 from gui.components.sidebar.sidebar_dock import Sidebar_Dock
 
 
@@ -63,11 +63,8 @@ def main():
         asidebar.print_list(open_windows_windows())
         layaut_center = Layaut_center(frames_per_milliseconds=30)
         
-
-
         windowsPrincipal.add_center(asidebar)
         windowsPrincipal.content_layaut.addWidget(layaut_center)
-        
         
         windowsPrincipal.show()
         splashScreen.finish(windowsPrincipal)

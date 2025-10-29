@@ -14,6 +14,7 @@ hwnd = int(sys.argv[1])
 
 while True:
     buffer = capture_window_by_hwnd(hwnd)
+
     if buffer:
         image_bytes = pil_image_to_png_bytes(buffer, 'JPEG', 75)
         if image_bytes:
@@ -22,7 +23,10 @@ while True:
                 "size": len(image_bytes),
                 "format": "JPEG"
             }
+
             print(json.dumps(header))  # Línea 1: encabezado JSON
             print(base64.b64encode(image_bytes).decode())  # Línea 2: imagen codificada
+
+
             sys.stdout.flush()
-    time.sleep(1 / 120)
+    time.sleep(1 / 90)
