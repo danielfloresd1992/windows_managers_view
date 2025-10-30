@@ -25,12 +25,12 @@ from core.app_singleton import  AppSingleton
 ##from gui.windows_main import MainWindow
 
 from PySide6.QtGui import QPixmap
-from PySide6.QtWidgets import QSplashScreen, QLabel
+from PySide6.QtWidgets import QGridLayout, QHBoxLayout, QVBoxLayout, QWidget
 from PySide6.QtCore import Qt
 
 from gui.windows_main import MainWindow 
 from gui.components.SplashScreen import SplashScreen
-from gui.components.render_box.render_box import Layaut_center
+from gui.components.render_box.render_box import Render_box
 from gui.components.sidebar.sidebar_dock import Sidebar_Dock
 
 
@@ -61,10 +61,34 @@ def main():
 
         asidebar = Sidebar_Dock(windowsPrincipal, title='Ventanas disponibles', src_ico='src/resources/ico.png')
         asidebar.print_list(open_windows_windows())
-        layaut_center = Layaut_center(frames_per_milliseconds=30)
+
+        lh_top = QWidget()
+        lh_top_layaut = QHBoxLayout(lh_top)
+        lh_bottom = QWidget()
+        lh_bottom_layaut = QHBoxLayout(lh_bottom)
+
+    
+
+
+        box1 = Render_box(frames_per_milliseconds=30)
+        box2 = Render_box(frames_per_milliseconds=30)
+        box3 = Render_box(frames_per_milliseconds=30)
+        box4 = Render_box(frames_per_milliseconds=30)
+
+        lh_top_layaut.addWidget(box1)
+        lh_top_layaut.addWidget(box2)
+        lh_bottom_layaut.addWidget(box3)
+        lh_bottom_layaut.addWidget(box4)
         
         windowsPrincipal.add_center(asidebar)
-        windowsPrincipal.content_layaut.addWidget(layaut_center)
+
+    
+        box_content = QWidget()
+        box_content_layaut = QVBoxLayout(box_content)
+        box_content_layaut.addWidget(lh_top)
+        box_content_layaut.addWidget(lh_bottom)
+
+        windowsPrincipal.content_layaut.addWidget(box_content)
         
         windowsPrincipal.show()
         splashScreen.finish(windowsPrincipal)

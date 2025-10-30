@@ -17,7 +17,7 @@ script_path = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "..", "..", "workers", "capture_worker.py")
 )
 
-class Layaut_center(QWidget):
+class Render_box(QWidget):
 
 
     def __init__(self, frames_per_milliseconds = 100):
@@ -41,6 +41,7 @@ class Layaut_center(QWidget):
         
         self.title_main = QLabel(f'viewing window')
         self.title_main.setAlignment(Qt.AlignCenter)
+        
         bar_options = QWidget()
         bar_options.setMaximumHeight(50)
         

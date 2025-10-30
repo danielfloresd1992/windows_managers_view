@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QApplication, QMainWindow, QHBoxLayout, QWidget, QVBoxLayout, QLabel, QPushButton, QSizePolicy
+from PySide6.QtWidgets import QApplication, QMainWindow, QHBoxLayout, QWidget, QVBoxLayout, QLabel, QPushButton, QSizePolicy, QGridLayout
 from PySide6.QtCore import Qt
 from core.app_singleton import AppSingleton
 
@@ -33,12 +33,11 @@ class MainWindow(QMainWindow):
         main_layout.setSpacing(0)
 
 
-
         # DECLARACIÓN DE COMPONENTES PRINCIPALES
         self.title_bar = CustomTitleBar(self)
     
-
         self.setCentralWidget(central_widget)
+
         content_center = QWidget()
         self.content_layaut = QHBoxLayout(content_center)
 
