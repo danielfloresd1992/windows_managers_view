@@ -43,7 +43,7 @@ class Render_box(QWidget):
         self.title_main.setAlignment(Qt.AlignCenter)
         
         bar_options = QWidget()
-        bar_options.setMaximumHeight(50)
+        bar_options.setMaximumHeight(30)
         
         bar_options.setAttribute(Qt.WA_StyledBackground, True)
         bar_options.setObjectName('bar_options')
@@ -51,6 +51,10 @@ class Render_box(QWidget):
         bar_option_layaut.setContentsMargins(10, 0, 10, 0)
         bar_option_layaut.setSpacing(0)
         
+
+        self.btn_cap = QPushButton('📷')
+        self.btn_cap.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.btn_cap.setObjectName('btn-bar')
         btn_play = QPushButton('▶')
         btn_play.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         btn_play.setObjectName('btn-bar')
@@ -69,6 +73,7 @@ class Render_box(QWidget):
         self.text_fps.setObjectName('text-fps')
         bar_option_layaut.addWidget(self.text_fps)
         bar_option_layaut.addStretch(1)
+        bar_option_layaut.addWidget(self.btn_cap)
         bar_option_layaut.addWidget(btn_play)
         bar_option_layaut.addWidget(btn_pause)
         bar_option_layaut.addWidget(btn_stop)

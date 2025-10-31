@@ -60,13 +60,13 @@ ScrollAreaSidebar{
     font-weight: bold;
 }
 #btn-bar{
-    min-width: 30px;
-    min-height: 30px;
-    max-width: 30px;
-    max-height: 30px;
+    min-width: 20px;
+    min-height: 20px;
+    max-width: 20px;
+    max-height: 20px;
     padding: 0px;
     margin: 5px;
-    font-size: 14px;
+    font-size: 10px;
     font-weight: bold;
     background-color: #00dddddd;
     border: 1px solid #dadada;
