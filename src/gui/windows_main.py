@@ -10,7 +10,7 @@ from gui.components.title_bar.window_bar import CustomTitleBar
 
 class MainWindow(QMainWindow):
 
-    MARGIN = 8  # margen sensible para detectar bordes
+    MARGIN = 16  # margen sensible para detectar bordes
 
 
 
@@ -38,12 +38,13 @@ class MainWindow(QMainWindow):
 
 
     def setup_ui(self):
+       
         self.resize(1024, 768)
 
         # CONTENEDOR PRINCIPAL
         central_widget = QWidget()
         main_layout = QVBoxLayout(central_widget)
-        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setContentsMargins(0,0,0,0)
         main_layout.setSpacing(0)
 
         # DECLARACIÓN DE COMPONENTES PRINCIPALES
@@ -53,6 +54,7 @@ class MainWindow(QMainWindow):
 
         content_center = QWidget()
         self.content_layaut = QHBoxLayout(content_center)
+        self.content_layaut.setContentsMargins(0,0,0,0)
         content_center.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         # INTRIDUCIÓN DE COMPÓNENTES PRNCIPALES

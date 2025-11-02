@@ -25,6 +25,7 @@ class Box_cap(QWidget):
         print(f'initializing in window window: {self.id_windows}\ntitle: {self.title}')
 
         layaut_content = QHBoxLayout(self)
+        layaut_content.setContentsMargins(0,0,0,0)
         self.image_label = QLabel() 
         layaut_content.addWidget(self.image_label)
 

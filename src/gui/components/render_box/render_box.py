@@ -1,7 +1,7 @@
 import os, json, base64
 import time
 from PySide6.QtWidgets import (
-    QWidget, QLabel, QHBoxLayout, QVBoxLayout, QGridLayout,
+    QFrame, QWidget, QLabel, QHBoxLayout, QVBoxLayout, QGridLayout,
     QSizePolicy, QPushButton, QStackedLayout
 )
 from PySide6.QtCore import Qt, Slot, QProcess, QByteArray, QEvent
@@ -11,11 +11,15 @@ from core.state_global.hwnd import hwndState
 from core.capture_exaple import capture_window_by_hwnd, pil_image_to_png_bytes
 from core.window_controller import set_window_always_on_top
 
+
+
 script_path = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "..", "..", "workers", "capture_worker.py")
 )
 
-class Render_box(QWidget):
+
+
+class Render_box(QFrame):
     def __init__(self, frames_per_milliseconds=100):
         super().__init__()
         self.process = None
@@ -23,39 +27,32 @@ class Render_box(QWidget):
         self.frame_count = 0
         self.last_fps_time = time.time()
         self.current_fps = 0
+        
         self.setup_ui()
         hwndState.change_hwnd.connect(self.get_hwnd_and_print)
-        self.bar_options.hide()  # Oculta al iniciar
+        #self.bar_options.hide()  # Oculta al iniciar
 
 
 
     def setup_ui(self):
+        self.setObjectName('box-content')
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.stack = QStackedLayout(self)   # renombrado para no chocar con QWidget.layout()
+        self.stack = QVBoxLayout(self)   # renombrado para no chocar con QWidget.layout()
         self.stack.setContentsMargins(0, 0, 0, 0)
 
         # Imagen principal
 
-        self.image = QWidget()
-        self.image.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.image_layout =  QGridLayout(self.image)
         self.imagen_label = QLabel('viewing window')
         self.imagen_label.setAlignment(Qt.AlignCenter)
-        self.image_layout.addWidget(self.imagen_label)
-        self.stack.addWidget(self.image)
+        
 
-
-        # --- Overlay con barra en el bottom ---
-        self.overlay = QWidget()
-        overlay_layout = QVBoxLayout(self.overlay)
-        overlay_layout.setContentsMargins(0, 0, 0, 0)
-        overlay_layout.setSpacing(0)
-        overlay_layout.addStretch(1)  
 
         self.bar_options = QWidget()
+        self.bar_options.setAttribute(Qt.WA_StyledBackground, True)
         self.bar_options.setMaximumHeight(30)
         self.bar_options.setObjectName("bar_options")
-        self.bar_options.setStyleSheet("background-color: rgba(0,0,0,150);")
+       
+
 
         bar_option_layout = QHBoxLayout(self.bar_options)
         bar_option_layout.setContentsMargins(10, 0, 10, 0)
@@ -91,14 +88,13 @@ class Render_box(QWidget):
         bar_option_layout.addWidget(btn_pause)
         bar_option_layout.addWidget(btn_stop)
 
-        overlay_layout.addWidget(self.bar_options)
+        
 
-        # Añadir overlay al stack (queda encima de la imagen)
-        self.stack.addWidget(self.overlay)
-        self.stack.setStackingMode(QStackedLayout.StackAll)
+        self.stack.addWidget(self.imagen_label)
+        self.stack.addWidget(self.bar_options)  
 
         # Hover en la imagen
-        self.imagen_label.installEventFilter(self)
+        ##self.imagen_label.installEventFilter(self)
 
 
 

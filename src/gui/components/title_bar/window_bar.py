@@ -33,7 +33,7 @@ class CustomTitleBar(QWidget):
         
         layout = QHBoxLayout(self)
         layout.setObjectName('layout_title_bar')
-        layout.setContentsMargins(0, 0, 5, 0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
    
 

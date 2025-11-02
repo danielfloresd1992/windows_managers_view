@@ -27,7 +27,7 @@ class Sidebar_Dock(QWidget):
         self.setFixedWidth(250)  # Sidebar de 250px de ancho
         self.setAttribute(Qt.WA_StyledBackground, True)
         layout_dock = QVBoxLayout(self)
-    
+        layout_dock.setContentsMargins(0,0,0,0)
         header = QWidget()
         header_layaut = QHBoxLayout(header)
         header.setObjectName('Head')
@@ -63,6 +63,7 @@ class Sidebar_Dock(QWidget):
         content_center.setAttribute(Qt.WA_StyledBackground, True)
         content_center.setObjectName('ContentSidebar')
         self.content_layaut = QVBoxLayout(content_center)
+        self.content_layaut.setContentsMargins(0,0,0,0)
         self.content_layaut.setAlignment(Qt.AlignTop| Qt.AlignHCenter)
         self.scroll_area.setWidget(content_center)
 

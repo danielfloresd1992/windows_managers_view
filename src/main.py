@@ -64,9 +64,11 @@ def main():
 
         lh_top = QWidget()
         lh_top_layaut = QHBoxLayout(lh_top)
+        lh_top_layaut.setContentsMargins(0,0,0,0)
+
         lh_bottom = QWidget()
         lh_bottom_layaut = QHBoxLayout(lh_bottom)
-
+        lh_bottom_layaut.setContentsMargins(0,0,0,0)
     
 
 
@@ -85,6 +87,7 @@ def main():
     
         box_content = QWidget()
         box_content_layaut = QVBoxLayout(box_content)
+        box_content_layaut.setContentsMargins(0,0,0,0)
         box_content_layaut.addWidget(lh_top)
         box_content_layaut.addWidget(lh_bottom)
 
