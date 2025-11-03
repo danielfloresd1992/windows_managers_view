@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout 
-from PySide6.QtGui import QPixmap, QPainter, QColor, QFont, QPainterPath, QFontMetrics
-from PySide6.QtCore import Qt, QTimer, Slot, QRect
+from PySide6.QtGui import QPixmap, QPainter, QColor, QFont, QPainterPath, QFontMetrics, QMouseEvent,  QDrag 
+from PySide6.QtCore import Qt, QTimer, Slot, QRect, QMimeData,QByteArray
 
 from core.capture_exaple import capture_window_by_hwnd, pil_image_to_png_bytes
 from core.window_controller import set_window_always_on_top
@@ -15,7 +15,6 @@ class Box_cap(QWidget):
         super().__init__()
         self.id_windows = window['hwnd']
         self.title = window['title']
-       
         self.set_ui()
 
 
@@ -28,7 +27,6 @@ class Box_cap(QWidget):
         layaut_content.setContentsMargins(0,0,0,0)
         self.image_label = QLabel() 
         layaut_content.addWidget(self.image_label)
-
         self.update_frame()
 
         
@@ -39,7 +37,6 @@ class Box_cap(QWidget):
         image_buffer = capture_window_by_hwnd(self.id_windows)
         return  pil_image_to_png_bytes( image_buffer)
     
-
 
 
 
@@ -83,11 +80,28 @@ class Box_cap(QWidget):
 
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            hwndState.set_hwnd(self.id_windows)
-        elif event.button() == Qt.RightButton:
-            print('Click derecho en el widget')
-        # Importante: llamar al padre si quieres que otros eventos sigan funcionando
-        super().mousePressEvent(event)
+         if event.button() == Qt.LeftButton:
+            # 1. Crear el objeto QDrag
+            drag = QDrag(self)
+
+            # 2. Crear y asignar datos MIME
+            mime = self.build_mime()
+
+            drag.setMimeData(mime)
+
+            # 3. Pixmap para feedback visual
+            pixmap = QPixmap(self.size())
+            self.render(pixmap)
+            drag.setPixmap(pixmap)
+            drag.setHotSpot(event.pos())
+
+            # 4. Ejecutar el arrastre
+            drag.exec(Qt.CopyAction)
 
 
+
+    def build_mime(self):
+        mime = QMimeData()
+        payload = f'{self.id_windows}|{self.title}'
+        mime.setData("application/x-boxcap", QByteArray(payload.encode("utf-8")))
+        return mime

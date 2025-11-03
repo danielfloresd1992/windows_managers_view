@@ -22,6 +22,7 @@ script_path = os.path.abspath(
 class Render_box(QFrame):
     def __init__(self, frames_per_milliseconds=100):
         super().__init__()
+        self.setAcceptDrops(True)
         self.process = None
         self.frames_per_milliseconds = frames_per_milliseconds
         self.frame_count = 0
@@ -203,3 +204,35 @@ class Render_box(QFrame):
 
             except Exception as e:
                 print(f"❌ Error al procesar imagen: {e}")
+
+
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasFormat('application/x-boxcap'):
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+
+
+    def dropEvent(self, event):
+        print(event)
+        if event.mimeData().hasFormat("application/x-boxcap"):
+            raw = bytes(event.mimeData().data("application/x-boxcap")).decode("utf-8")
+
+            other_hwnd, other_title = raw.split("|", 1)
+            self.get_hwnd_and_print(int(other_hwnd))
+            # Evitar copiarse a sí mismo
+            if int(other_hwnd) == getattr(self, "id_windows", None):
+                event.ignore()
+                return
+
+            # Copiar datos del otro widget
+            self.id_windows = int(other_hwnd)
+            self.title = other_title
+
+            # Refrescar la vista
+
+            event.acceptProposedAction()
+        else:
+            event.ignore()

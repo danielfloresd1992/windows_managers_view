@@ -73,12 +73,16 @@ class Sidebar_Dock(QWidget):
 
 
 
-
     
     def print_list(self, list_windows):
         
         if(list_windows):
             for window in list_windows:
-                self.content_layaut.addWidget(Box_cap(window))
+                box_cap = Box_cap(window)
+
+
+                self.content_layaut.addWidget(box_cap)
+
+
 
 
