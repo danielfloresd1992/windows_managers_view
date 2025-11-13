@@ -96,7 +96,7 @@ def main():
         windowsPrincipal.show()
         splashScreen.finish(windowsPrincipal)
 
-        return AppSingleton.exec()
+        return app.exec()
     
     except Exception as e:
         print(f'Fatal crash: {e}')

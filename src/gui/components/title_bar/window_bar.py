@@ -38,7 +38,7 @@ class CustomTitleBar(QWidget):
    
 
 
-        self.title = QLabel(f'{os.getenv('name_project', 'App')} {os.getenv('version', '1.0')}')
+        self.title = QLabel(f"{os.getenv('name_project', 'App')} {os.getenv('version', '1.0')}")
         self.title.setObjectName('title_label')
         self.title.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
 
