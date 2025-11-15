@@ -1,15 +1,18 @@
 import os, json, base64
 import time
+
 from PySide6.QtWidgets import (
     QFrame, QWidget, QLabel, QHBoxLayout, QVBoxLayout, QGridLayout,
     QSizePolicy, QPushButton, QStackedLayout
 )
-from PySide6.QtCore import Qt, Slot, QProcess, QByteArray, QEvent
+from PySide6.QtCore import Qt, Slot, QProcess, QByteArray, QEvent, QUrl
+from PySide6.QtWebSockets import QWebSocket
 from PySide6.QtGui import QPixmap, QCursor
 
 from core.state_global.hwnd import hwndState
 from core.capture_exaple import capture_window_by_hwnd, pil_image_to_png_bytes
 from core.window_controller import set_window_always_on_top
+
 
 
 
@@ -20,9 +23,15 @@ script_path = os.path.abspath(
 
 
 class Render_box(QFrame):
+    
+    
     def __init__(self, frames_per_milliseconds=100):
         super().__init__()
+        self.init_websocket()
         self.setAcceptDrops(True)
+        
+        self.analytical_mode = False
+        
         self.process = None
         self.frames_per_milliseconds = frames_per_milliseconds
         self.frame_count = 0
@@ -32,6 +41,7 @@ class Render_box(QFrame):
         self.setup_ui()
         hwndState.change_hwnd.connect(self.get_hwnd_and_print)
         #self.bar_options.hide()  # Oculta al iniciar
+        
 
 
 
@@ -178,9 +188,14 @@ class Render_box(QFrame):
         while self.process and self.process.canReadLine():
             header_line = self.process.readLine().data().decode().strip()
             image_line = self.process.readLine().data().decode().strip()
+            
             try:
+            
+            
                 header = json.loads(header_line)
                 image_bytes = base64.b64decode(image_line)
+                
+                
                 pixmap = QPixmap()
 
                 if pixmap.loadFromData(QByteArray(image_bytes), header.get("format", "JPEG")):
@@ -193,7 +208,17 @@ class Render_box(QFrame):
                         Qt.SmoothTransformation,
                     )
                     self.imagen_label.setPixmap(pixmap_escalada)
-
+                    
+                image_base64 = base64.b64encode(image_bytes).decode()
+                
+                data_to_Send = {
+                    "header": header,
+                    "image" : image_base64
+                }
+                
+                self.websocket.sendTextMessage(json.dumps(data_to_Send))
+                
+                
                 self.frame_count += 1
                 now = time.time()
                 if now - self.last_fps_time >= 1.0:
@@ -201,9 +226,13 @@ class Render_box(QFrame):
                     self.frame_count = 0
                     self.last_fps_time = now
                     self.text_fps.setText(f"Tasa de FPS: {self.current_fps}")
+                    
+                    
 
             except Exception as e:
                 print(f"❌ Error al procesar imagen: {e}")
+         
+           
 
 
 
@@ -226,13 +255,43 @@ class Render_box(QFrame):
             if int(other_hwnd) == getattr(self, "id_windows", None):
                 event.ignore()
                 return
-
             # Copiar datos del otro widget
             self.id_windows = int(other_hwnd)
             self.title = other_title
-
-            # Refrescar la vista
-
             event.acceptProposedAction()
         else:
             event.ignore()
+            
+            
+            
+    def init_websocket(self):        
+      
+        self.websocket = QWebSocket()
+
+        # 2. Conectar señales del QWebSocket a slots de la clase
+        self.websocket.connected.connect(self.on_connected)
+        self.websocket.textMessageReceived.connect(self.on_text_message_received)
+
+        # 3. Intentar abrir la conexión
+        websocket_url = QUrl('ws://localhost:9000/ws')  # Cambia a tu URL de servidor
+        self.websocket.open(websocket_url)
+        
+        
+        
+    @Slot()
+    def on_connected(self):
+        """Manejador llamado cuando la conexión WebSocket se ha establecido."""
+        print("Conexión WebSocket establecida.")
+        # Ejemplo: Envía un mensaje inicial
+        self.websocket.sendTextMessage("¡Hola desde PySide6!")
+
+    @Slot(str)
+    def on_text_message_received(self, message):
+        """Manejador llamado cuando se recibe un mensaje de texto."""
+        print(f"Mensaje recibido: {message}")
+        # Aquí actualizas tu UI con el mensaje
+
+    @Slot()
+    def on_disconnected(self):
+        """Manejador llamado cuando la conexión WebSocket se cierra."""
+        print("Conexión WebSocket cerrada.")

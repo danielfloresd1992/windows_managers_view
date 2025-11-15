@@ -63,13 +63,17 @@ def capture_window_by_hwnd(hwnd):
                 bmpstr, 'raw', 'BGRX', 0, 1
             )
             
+            target_resize = (800, 600)
+            
+            img = im.resize(target_resize, Image.Resampling.BILINEAR)
+            
             # Limpiar recursos
             win32gui.DeleteObject(saveBitMap.GetHandle())
             saveDC.DeleteDC()
             mfcDC.DeleteDC()
             win32gui.ReleaseDC(hwnd, hwndDC)
             
-            return im
+            return img
         else:
             # Limpiar recursos en caso de error
             win32gui.DeleteObject(saveBitMap.GetHandle())
