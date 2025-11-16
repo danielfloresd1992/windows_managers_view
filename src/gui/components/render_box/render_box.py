@@ -27,11 +27,11 @@ class Render_box(QFrame):
     
     def __init__(self, frames_per_milliseconds=100):
         super().__init__()
-        self.init_websocket()
+        
         self.setAcceptDrops(True)
         
         self.analytical_mode = False
-        
+        self.websocket = None
         self.process = None
         self.frames_per_milliseconds = frames_per_milliseconds
         self.frame_count = 0
@@ -117,11 +117,13 @@ class Render_box(QFrame):
                 self.bar_options.hide()
         return super().eventFilter(obj, event)
     
+    
     # ---------------------------
     # Procesos de captura
     # ---------------------------
     def init_loop(self):
         try:
+            if self.websocket is None: self.init_websocket()
             if self.process is None:
                 self.process = QProcess(self)
                 self.pid = self.process.processId()
@@ -133,11 +135,14 @@ class Render_box(QFrame):
         except Exception as e:
             print(f"💥 Error: {e}")
 
+
+
     def pause_loop(self):
         if self.process:
             self.process.readyReadStandardOutput.disconnect(self.loop_show_result)
             self.text_fps.setText("Tasa de FPS: 0")
             print(self.process.processId())
+
 
     def detroy_loop(self):
         if self.process is not None:
@@ -147,6 +152,7 @@ class Render_box(QFrame):
             self.process = None
             self.imagen_label.clear()
             self.imagen_label.setText("viewing window")
+            self.close_socket()
 
 
 
@@ -156,7 +162,6 @@ class Render_box(QFrame):
             if hwnd is not None:
                 self.hwnd = hwnd
             set_window_always_on_top(self.hwnd)
-
             buffer = capture_window_by_hwnd(self.hwnd)
             if buffer is None:
                 return
@@ -215,9 +220,7 @@ class Render_box(QFrame):
                     "header": header,
                     "image" : image_base64
                 }
-                
                 self.websocket.sendTextMessage(json.dumps(data_to_Send))
-                
                 
                 self.frame_count += 1
                 now = time.time()
@@ -267,13 +270,12 @@ class Render_box(QFrame):
     def init_websocket(self):        
       
         self.websocket = QWebSocket()
-
         # 2. Conectar señales del QWebSocket a slots de la clase
         self.websocket.connected.connect(self.on_connected)
         self.websocket.textMessageReceived.connect(self.on_text_message_received)
 
         # 3. Intentar abrir la conexión
-        websocket_url = QUrl('ws://localhost:9000/ws')  # Cambia a tu URL de servidor
+        websocket_url = QUrl('ws://72.68.60.171:9000/ws')  # Cambia a tu URL de servidor
         self.websocket.open(websocket_url)
         
         
@@ -295,3 +297,7 @@ class Render_box(QFrame):
     def on_disconnected(self):
         """Manejador llamado cuando la conexión WebSocket se cierra."""
         print("Conexión WebSocket cerrada.")
+        
+        
+    def close_socket(self):
+        self.websocket.close()
