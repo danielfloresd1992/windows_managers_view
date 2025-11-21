@@ -110,11 +110,6 @@ def send_text_and_enter(hwnd, text):
 
 
 
-import win32gui
-import win32con
-import time
-import ctypes
-from ctypes import wintypes
 
 def set_window_always_on_top(hwnd):
     """

@@ -1,3 +1,6 @@
 venv/
 src/native/build
 .env
+compilate.bat
+dist/
+build/

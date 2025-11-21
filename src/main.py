@@ -5,9 +5,6 @@ from PIL import Image
 
 
 
-
-
-
 ### MODELS AND DATA
 from model.windows.list_windows import open_windows_windows
 

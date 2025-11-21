@@ -1,6 +1,6 @@
-import os, json, base64
+import os, json, base64, sys
 import time
-
+import traceback
 from PySide6.QtWidgets import (
     QFrame, QWidget, QLabel, QHBoxLayout, QVBoxLayout, QGridLayout,
     QSizePolicy, QPushButton, QStackedLayout
@@ -123,17 +123,42 @@ class Render_box(QFrame):
     # ---------------------------
     def init_loop(self):
         try:
-            if self.websocket is None: self.init_websocket()
+            print(f"🔄 Iniciando loop para hwnd: {self.hwnd}")
+            if hasattr(self.process, 'canReadLine') :print(self.process.canReadLine())
+            if self.hwnd is None:
+                print("❌ No hay hwnd definido")
+                return
+                
             if self.process is None:
                 self.process = QProcess(self)
-                self.pid = self.process.processId()
                 self.process.setProcessChannelMode(QProcess.MergedChannels)
                 self.process.readyReadStandardOutput.connect(self.loop_show_result)
-                self.process.start("python", ["src/workers/capture_woker.py", str(self.hwnd)])
+                
+                # 🔥 USAR sys.executable EN LUGAR DE 'python'
+                python_exe = sys.executable  # Esto apunta al Python que ejecuta la aplicación
+                worker_script = 'src/workers/capture_woker.py'
+                arguments = [worker_script, str(self.hwnd)]
+                
+                print(f"🐍 Usando Python: {python_exe}")
+                if not os.path.exists(worker_script):
+                    print(f"❌ Worker no encontrado: {worker_script}")
+                    return
+                    
+                self.process.start(python_exe, arguments)
+                
+                if not self.process.waitForStarted(5000):
+                    print("❌ No se pudo iniciar el proceso")
+                    return
+                    
+                print("✅ Proceso de captura iniciado")
             else:
                 self.process.readyReadStandardOutput.connect(self.loop_show_result)
+                
         except Exception as e:
             print(f"💥 Error: {e}")
+            import traceback
+            traceback.print_exc()
+            
 
 
 
@@ -190,19 +215,40 @@ class Render_box(QFrame):
 
 
     def loop_show_result(self):
-        while self.process and self.process.canReadLine():
-            header_line = self.process.readLine().data().decode().strip()
-            image_line = self.process.readLine().data().decode().strip()
+        if not self.process:
+            return
             
-            try:
+        # Leer todos los datos disponibles
+        data = self.process.readAllStandardOutput().data().decode('utf-8', errors='ignore')
+        lines = data.strip().split('\n')
+        
+        # Procesar las líneas en pares (header e imagen)
+        i = 0
+        while i < len(lines) - 1:
+            line1 = lines[i].strip()
+            line2 = lines[i+1].strip()
             
-            
-                header = json.loads(header_line)
-                image_bytes = base64.b64decode(image_line)
+            # Si la primera línea está vacía, saltar
+            if not line1:
+                i += 1
+                continue
                 
+            # Verificar que no son mensajes de error
+            if line1.startswith(('qt.', 'Traceback', 'File "', 'UnicodeEncodeError')):
+                i += 1
+                continue
+                
+            try:
+                header = json.loads(line1)
+                
+                # Verificar que tiene la estructura esperada
+                if not isinstance(header, dict) or 'timestamp' not in header:
+                    i += 2
+                    continue
+                    
+                image_bytes = base64.b64decode(line2)
                 
                 pixmap = QPixmap()
-
                 if pixmap.loadFromData(QByteArray(image_bytes), header.get("format", "JPEG")):
                     if not hasattr(self, "cached_size") or self.cached_size != self.imagen_label.size():
                         self.cached_size = self.imagen_label.size()
@@ -213,30 +259,31 @@ class Render_box(QFrame):
                         Qt.SmoothTransformation,
                     )
                     self.imagen_label.setPixmap(pixmap_escalada)
-                    
-                image_base64 = base64.b64encode(image_bytes).decode()
                 
-                data_to_Send = {
-                    "header": header,
-                    "image" : image_base64
-                }
-                self.websocket.sendTextMessage(json.dumps(data_to_Send))
-                
+                # Cálculo de FPS
                 self.frame_count += 1
                 now = time.time()
                 if now - self.last_fps_time >= 1.0:
                     self.current_fps = self.frame_count
                     self.frame_count = 0
                     self.last_fps_time = now
-                    self.text_fps.setText(f"Tasa de FPS: {self.current_fps}")
+                    self.text_fps.setText(f'Tasa de FPS: {self.current_fps}')
                     
-                    
-
-            except Exception as e:
-                print(f"❌ Error al procesar imagen: {e}")
-         
-           
-
+                
+                if(self.websocket): 
+                    image_base64 = base64.b64encode(image_bytes).decode()
+                    data_to_Send = {
+                        "header": header,
+                        "image" : image_base64
+                    }
+                    self.websocket.sendTextMessage(json.dumps(data_to_Send))
+                
+            except (json.JSONDecodeError, Exception) as e:
+                # Ignorar errores y continuar con el siguiente par
+                pass
+            i += 2
+        
+        
 
 
     def dragEnterEvent(self, event):
@@ -262,6 +309,8 @@ class Render_box(QFrame):
             self.id_windows = int(other_hwnd)
             self.title = other_title
             event.acceptProposedAction()
+            
+            if self.websocket is None: self.init_websocket()
         else:
             event.ignore()
             
@@ -285,7 +334,7 @@ class Render_box(QFrame):
         """Manejador llamado cuando la conexión WebSocket se ha establecido."""
         print("Conexión WebSocket establecida.")
         # Ejemplo: Envía un mensaje inicial
-        self.websocket.sendTextMessage("¡Hola desde PySide6!")
+      
 
     @Slot(str)
     def on_text_message_received(self, message):

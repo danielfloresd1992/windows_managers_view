@@ -26,9 +26,6 @@ class SplashScreen(QSplashScreen):
             painter.end()
 
           
-        else: {
-           self.draw_placeholder(pixmap)
-        }
             
         super().__init__(pixmap)
         self.setWindowFlag(Qt.FramelessWindowHint)
