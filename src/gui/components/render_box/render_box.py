@@ -270,13 +270,14 @@ class Render_box(QFrame):
                     self.text_fps.setText(f'Tasa de FPS: {self.current_fps}')
                     
                 
-                if(self.websocket): 
+                if not self.websocket == None: 
                     image_base64 = base64.b64encode(image_bytes).decode()
                     data_to_Send = {
                         "header": header,
                         "image" : image_base64
                     }
                     self.websocket.sendTextMessage(json.dumps(data_to_Send))
+                    print('Mensaje enviado por WebSocket')
                 
             except (json.JSONDecodeError, Exception) as e:
                 # Ignorar errores y continuar con el siguiente par
@@ -295,25 +296,26 @@ class Render_box(QFrame):
 
 
     def dropEvent(self, event):
-        print(event)
-        if event.mimeData().hasFormat("application/x-boxcap"):
-            raw = bytes(event.mimeData().data("application/x-boxcap")).decode("utf-8")
+        try:
+            if event.mimeData().hasFormat("application/x-boxcap"):
+                raw = bytes(event.mimeData().data("application/x-boxcap")).decode("utf-8")
 
-            other_hwnd, other_title = raw.split("|", 1)
-            self.get_hwnd_and_print(int(other_hwnd))
-            # Evitar copiarse a sí mismo
-            if int(other_hwnd) == getattr(self, "id_windows", None):
+                other_hwnd, other_title = raw.split("|", 1)
+                self.get_hwnd_and_print(int(other_hwnd))
+                # Evitar copiarse a sí mismo
+                if int(other_hwnd) == getattr(self, "id_windows", None):
+                    event.ignore()
+                    return
+                # Copiar datos del otro widget
+                self.id_windows = int(other_hwnd)
+                self.title = other_title
+                event.acceptProposedAction()
+                
+                if self.websocket is None: self.init_websocket()
+            else:
                 event.ignore()
-                return
-            # Copiar datos del otro widget
-            self.id_windows = int(other_hwnd)
-            self.title = other_title
-            event.acceptProposedAction()
-            
-            if self.websocket is None: self.init_websocket()
-        else:
-            event.ignore()
-            
+        except Exception as e:
+            print(f"💥 Error en dropEvent: {e}")
             
             
     def init_websocket(self):        
