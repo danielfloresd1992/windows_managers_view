@@ -65,7 +65,6 @@ def main():
         lh_bottom = QWidget()
         lh_bottom_layaut = QHBoxLayout(lh_bottom)
         lh_bottom_layaut.setContentsMargins(0,0,0,0)
-    
 
 
         box1 = Render_box(frames_per_milliseconds=30)

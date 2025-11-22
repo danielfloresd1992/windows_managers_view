@@ -2,13 +2,11 @@ import os, json, base64, sys
 import re
 import time
 import traceback
-from PySide6.QtWidgets import (
-    QFrame, QWidget, QLabel, QHBoxLayout, QVBoxLayout, QGridLayout,
-    QSizePolicy, QPushButton, QStackedLayout
-)
+from PySide6.QtWidgets import  QFrame, QWidget, QLabel, QHBoxLayout, QVBoxLayout, QGridLayout, QSizePolicy, QPushButton, QStackedLayout, QGraphicsView, QGraphicsScene, QGraphicsEllipseItem,  QGraphicsPixmapItem
+
 from PySide6.QtCore import Qt, Slot, QProcess, QByteArray, QEvent, QUrl
 from PySide6.QtWebSockets import QWebSocket
-from PySide6.QtGui import QPixmap, QCursor
+from PySide6.QtGui import QPixmap, QCursor, QBrush, QColor, QPainter
 
 from core.state_global.hwnd import hwndState
 from core.capture_exaple import capture_window_by_hwnd, pil_image_to_png_bytes
@@ -39,6 +37,10 @@ class Render_box(QFrame):
         self.last_fps_time = time.time()
         self.current_fps = 0
         
+        
+        self.with_image = 0
+        self.height_image = 0
+        
         self.setup_ui()
         hwndState.change_hwnd.connect(self.get_hwnd_and_print)
         #self.bar_options.hide()  # Oculta al iniciar
@@ -52,13 +54,35 @@ class Render_box(QFrame):
         self.stack = QVBoxLayout(self)   # renombrado para no chocar con QWidget.layout()
         self.stack.setContentsMargins(0, 0, 0, 0)
 
-        # Imagen principal
-
-        self.imagen_label = QLabel('viewing window')
-        self.imagen_label.setAlignment(Qt.AlignCenter)
+        self.scene = QGraphicsScene(self)
+        self.view = QGraphicsView(self.scene)
+        self.view.setAlignment(Qt.AlignCenter)
+        self.view.setRenderHint(self.view.renderHints() | QPainter.Antialiasing)
+        # CREAR ESCENA DE PRUEBA
+        self.pixmap_item = QGraphicsPixmapItem()
+        self.scene.addItem(self.pixmap_item)
         
-
-
+        
+        ellipse = QGraphicsEllipseItem(0, 0, 4, 4)
+        ellipse.setBrush(QBrush(QColor("red")))   # color de relleno
+        ellipse.setFlag(QGraphicsEllipseItem.ItemIsMovable, True)   # hacerlo draggable
+        ellipse.setFlag(QGraphicsEllipseItem.ItemIsSelectable, True) # seleccionable
+        self.scene.addItem(ellipse)
+        
+        # Item de imagen (se actualizará en update_streaming_frame)
+        self.pixmap_item = QGraphicsPixmapItem()
+        self.scene.addItem(self.pixmap_item)
+        
+        # Ejemplo: añadir un punto draggable
+        self.point = QGraphicsEllipseItem(0, 0, 4, 4)
+        self.point.setBrush(QBrush(QColor("red")))
+        self.point.setFlag(QGraphicsEllipseItem.ItemIsMovable, True)
+        self.scene.addItem(self.point)
+        
+       ## self.imagen_label = QLabel('viewing window')
+        
+       ## self.imagen_label.setAlignment(Qt.AlignCenter)
+        
         self.bar_options = QWidget()
         self.bar_options.setAttribute(Qt.WA_StyledBackground, True)
         self.bar_options.setMaximumHeight(30)
@@ -91,9 +115,13 @@ class Render_box(QFrame):
         btn_stop.clicked.connect(self.detroy_loop)
 
         self.text_fps = QLabel(f"Tasa de FPS: {self.current_fps}")
-        self.text_fps.setObjectName("text-fps")
-
+        self.text_fps.setObjectName('text-fps')
+        
+        self.text_size = QLabel(f'Tamaño: {self.with_image}x{self.height_image}')
+        self.text_size.setObjectName('text-fps')
+        
         bar_option_layout.addWidget(self.text_fps)
+        bar_option_layout.addWidget(self.text_size)
         bar_option_layout.addStretch(1)
         bar_option_layout.addWidget(self.btn_cap)
         bar_option_layout.addWidget(btn_play)
@@ -102,7 +130,7 @@ class Render_box(QFrame):
 
         
 
-        self.stack.addWidget(self.imagen_label)
+        self.stack.addWidget(self.view)
         self.stack.addWidget(self.bar_options)  
 
         # Hover en la imagen
@@ -111,7 +139,7 @@ class Render_box(QFrame):
 
 
     def eventFilter(self, obj, event):
-        if obj is self.imagen_label:
+        if obj is self.view:
             if event.type() == QEvent.Enter:
                 self.bar_options.show()
             elif event.type() == QEvent.Leave:
@@ -178,8 +206,8 @@ class Render_box(QFrame):
             if not self.process.waitForFinished(3000):
                 self.process.kill()
             self.process = None
-            self.imagen_label.clear()
-            self.imagen_label.setText("viewing window")
+            self.view.clear()
+            self.view.setText("viewing window")
             self.close_socket()
 
 
@@ -193,26 +221,11 @@ class Render_box(QFrame):
             buffer = capture_window_by_hwnd(self.hwnd)
             if buffer is None:
                 return
-
             image = pil_image_to_png_bytes(buffer)
             if image is None:
                 return
-
-            
-            pixmap = QPixmap()
-            success = pixmap.loadFromData(image, "PNG")
-            if not success:
-                return
-
-            self.cached_size = self.imagen_label.size()
-            pixmap_escalada = pixmap.scaled(
-                self.cached_size,
-                Qt.IgnoreAspectRatio,
-                Qt.SmoothTransformation,
-            )
-            self.imagen_label.setPixmap(pixmap_escalada)
+            self.update_streaming_frame(image, type_image='bytes')
             self.bar_options.raise_()
-            
         except Exception as e:
             print(f"💥 Error: {e}")
 
@@ -231,7 +244,6 @@ class Render_box(QFrame):
         while i < len(lines) - 1:
             line1 = lines[i].strip()
             line2 = lines[i+1].strip()
-            
             # Si la primera línea está vacía, saltar
             if not line1:
                 i += 1
@@ -244,26 +256,13 @@ class Render_box(QFrame):
                 
             try:
                 header = json.loads(line1)
-                
                 # Verificar que tiene la estructura esperada
                 if not isinstance(header, dict) or 'timestamp' not in header:
                     i += 2
                     continue
                     
                 image_bytes = base64.b64decode(line2)
-                ''' 
-                pixmap = QPixmap()
-                if pixmap.loadFromData(QByteArray(image_bytes), header.get("format", "JPEG")):
-                    if not hasattr(self, "cached_size") or self.cached_size != self.imagen_label.size():
-                        self.cached_size = self.imagen_label.size()
-
-                    pixmap_escalada = pixmap.scaled(
-                        self.cached_size,
-                        Qt.IgnoreAspectRatio,
-                        Qt.SmoothTransformation,
-                    )
-                    self.imagen_label.setPixmap(pixmap_escalada)
-                '''
+              
                 # Cálculo de FPS
                 self.frame_count += 1
                 now = time.time()
@@ -288,39 +287,40 @@ class Render_box(QFrame):
                 pass
             i += 2
             
+            
         
         
-    def update_streaming_frame(self, frame):
+    def update_streaming_frame(self, frame, type_image='base64'):
         try:
             pixmap = QPixmap()
-            base64_str = re.sub(r'^data:image/\w+;base64,', '', frame)
-            frame_bytes = base64.b64decode(base64_str)
-            if pixmap.loadFromData(frame_bytes, 'JPEG'):
-                if not hasattr(self, "cached_size") or self.cached_size != self.imagen_label.size():
-                    self.cached_size = self.imagen_label.size()
-
+            map = False
+            if type_image == 'base64':
+                base64_str = re.sub(r'^data:image/\w+;base64,', '', frame)
+                frame_bytes = base64.b64decode(base64_str)
+                map = pixmap.loadFromData(frame_bytes, 'JPEG')
+            else:
+                map = pixmap.loadFromData(frame, "PNG")
+            if map:
+                if not hasattr(self, "cached_size") or self.cached_size != self.view.size():
+                    self.cached_size = self.view.size()
+                size = pixmap.size()
+                self.width = size.width()
+                self.height = size.height()
+                self.text_size.setText(f'Tamaño: {self.width}x{self.height}')
                 pixmap_escalada = pixmap.scaled(
                     self.cached_size,
                     Qt.IgnoreAspectRatio,
                     Qt.SmoothTransformation,
                 )
-                self.imagen_label.setPixmap(pixmap_escalada)
+                self.pixmap_item.setPixmap(pixmap_escalada)
+                print(self.pixmap_item.size())
+                
+                
         except Exception as e:
             print(f"💥 Error en update_streaming_frame: {e}")
         
-            ''' 
-                pixmap = QPixmap()
-                if pixmap.loadFromData(QByteArray(image_bytes), header.get("format", "JPEG")):
-                    if not hasattr(self, "cached_size") or self.cached_size != self.imagen_label.size():
-                        self.cached_size = self.imagen_label.size()
-
-                    pixmap_escalada = pixmap.scaled(
-                        self.cached_size,
-                        Qt.IgnoreAspectRatio,
-                        Qt.SmoothTransformation,
-                    )
-                    self.imagen_label.setPixmap(pixmap_escalada)
-            '''
+    
+    
 
 
     def dragEnterEvent(self, event):
@@ -333,9 +333,9 @@ class Render_box(QFrame):
 
     def dropEvent(self, event):
         try:
+            print()
             if event.mimeData().hasFormat("application/x-boxcap"):
                 raw = bytes(event.mimeData().data("application/x-boxcap")).decode("utf-8")
-
                 other_hwnd, other_title = raw.split("|", 1)
                 self.get_hwnd_and_print(int(other_hwnd))
                 # Evitar copiarse a sí mismo
@@ -346,7 +346,7 @@ class Render_box(QFrame):
                 self.id_windows = int(other_hwnd)
                 self.title = other_title
                 event.acceptProposedAction()
-                
+                print(self.id_windows)
                 if self.websocket is None: self.init_websocket()
             else:
                 event.ignore()
@@ -354,8 +354,8 @@ class Render_box(QFrame):
             print(f"💥 Error en dropEvent: {e}")
             
             
+            
     def init_websocket(self):        
-      
         self.websocket = QWebSocket()
         # 2. Conectar señales del QWebSocket a slots de la clase
         self.websocket.connected.connect(self.on_connected)
@@ -380,7 +380,7 @@ class Render_box(QFrame):
         data = json.loads(message)
         if data['status'] == 'success':
             processed_image = data['processed_image']
-            self.update_streaming_frame(processed_image)
+            self.update_streaming_frame(processed_image, type_image='base64')
        
         
         
