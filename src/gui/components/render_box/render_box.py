@@ -1,4 +1,5 @@
 import os, json, base64, sys
+import re
 import time
 import traceback
 from PySide6.QtWidgets import (
@@ -153,6 +154,7 @@ class Render_box(QFrame):
                 print("✅ Proceso de captura iniciado")
             else:
                 self.process.readyReadStandardOutput.connect(self.loop_show_result)
+                pass
                 
         except Exception as e:
             print(f"💥 Error: {e}")
@@ -164,6 +166,7 @@ class Render_box(QFrame):
 
     def pause_loop(self):
         if self.process:
+            pass
             self.process.readyReadStandardOutput.disconnect(self.loop_show_result)
             self.text_fps.setText("Tasa de FPS: 0")
             print(self.process.processId())
@@ -195,6 +198,7 @@ class Render_box(QFrame):
             if image is None:
                 return
 
+            
             pixmap = QPixmap()
             success = pixmap.loadFromData(image, "PNG")
             if not success:
@@ -208,7 +212,7 @@ class Render_box(QFrame):
             )
             self.imagen_label.setPixmap(pixmap_escalada)
             self.bar_options.raise_()
-
+            
         except Exception as e:
             print(f"💥 Error: {e}")
 
@@ -247,7 +251,7 @@ class Render_box(QFrame):
                     continue
                     
                 image_bytes = base64.b64decode(line2)
-                
+                ''' 
                 pixmap = QPixmap()
                 if pixmap.loadFromData(QByteArray(image_bytes), header.get("format", "JPEG")):
                     if not hasattr(self, "cached_size") or self.cached_size != self.imagen_label.size():
@@ -259,7 +263,7 @@ class Render_box(QFrame):
                         Qt.SmoothTransformation,
                     )
                     self.imagen_label.setPixmap(pixmap_escalada)
-                
+                '''
                 # Cálculo de FPS
                 self.frame_count += 1
                 now = time.time()
@@ -283,8 +287,40 @@ class Render_box(QFrame):
                 # Ignorar errores y continuar con el siguiente par
                 pass
             i += 2
+            
         
         
+    def update_streaming_frame(self, frame):
+        try:
+            pixmap = QPixmap()
+            base64_str = re.sub(r'^data:image/\w+;base64,', '', frame)
+            frame_bytes = base64.b64decode(base64_str)
+            if pixmap.loadFromData(frame_bytes, 'JPEG'):
+                if not hasattr(self, "cached_size") or self.cached_size != self.imagen_label.size():
+                    self.cached_size = self.imagen_label.size()
+
+                pixmap_escalada = pixmap.scaled(
+                    self.cached_size,
+                    Qt.IgnoreAspectRatio,
+                    Qt.SmoothTransformation,
+                )
+                self.imagen_label.setPixmap(pixmap_escalada)
+        except Exception as e:
+            print(f"💥 Error en update_streaming_frame: {e}")
+        
+            ''' 
+                pixmap = QPixmap()
+                if pixmap.loadFromData(QByteArray(image_bytes), header.get("format", "JPEG")):
+                    if not hasattr(self, "cached_size") or self.cached_size != self.imagen_label.size():
+                        self.cached_size = self.imagen_label.size()
+
+                    pixmap_escalada = pixmap.scaled(
+                        self.cached_size,
+                        Qt.IgnoreAspectRatio,
+                        Qt.SmoothTransformation,
+                    )
+                    self.imagen_label.setPixmap(pixmap_escalada)
+            '''
 
 
     def dragEnterEvent(self, event):
@@ -341,8 +377,13 @@ class Render_box(QFrame):
     @Slot(str)
     def on_text_message_received(self, message):
         """Manejador llamado cuando se recibe un mensaje de texto."""
-        print(f"Mensaje recibido: {message}")
-        # Aquí actualizas tu UI con el mensaje
+        data = json.loads(message)
+        if data['status'] == 'success':
+            processed_image = data['processed_image']
+            self.update_streaming_frame(processed_image)
+       
+        
+        
 
     @Slot()
     def on_disconnected(self):
