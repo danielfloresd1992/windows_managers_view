@@ -1,12 +1,17 @@
 import os, json, base64, sys
 import re
 import time
-import traceback
-from PySide6.QtWidgets import  QFrame, QWidget, QLabel, QHBoxLayout, QVBoxLayout, QGridLayout, QSizePolicy, QPushButton, QStackedLayout, QGraphicsView, QGraphicsScene, QGraphicsEllipseItem,  QGraphicsPixmapItem
 
-from PySide6.QtCore import Qt, Slot, QProcess, QByteArray, QEvent, QUrl
+
+from PySide6.QtWidgets import (
+    QFrame, QWidget, QLabel, QHBoxLayout, QVBoxLayout, QGridLayout,
+    QSizePolicy, QPushButton
+)
+from PySide6.QtCore import Qt, Slot, QProcess,  QUrl, QPoint,  QRect
 from PySide6.QtWebSockets import QWebSocket
-from PySide6.QtGui import QPixmap, QCursor, QBrush, QColor, QPainter
+from PySide6.QtGui import QPixmap, QCursor
+
+from ..custon_label.interactive_imageLabel import interactive_imageLabel
 
 from core.state_global.hwnd import hwndState
 from core.capture_exaple import capture_window_by_hwnd, pil_image_to_png_bytes
@@ -37,7 +42,6 @@ class Render_box(QFrame):
         self.last_fps_time = time.time()
         self.current_fps = 0
         
-        
         self.with_image = 0
         self.height_image = 0
         
@@ -54,34 +58,12 @@ class Render_box(QFrame):
         self.stack = QVBoxLayout(self)   # renombrado para no chocar con QWidget.layout()
         self.stack.setContentsMargins(0, 0, 0, 0)
 
-        self.scene = QGraphicsScene(self)
-        self.view = QGraphicsView(self.scene)
-        self.view.setAlignment(Qt.AlignCenter)
-        self.view.setRenderHint(self.view.renderHints() | QPainter.Antialiasing)
-        # CREAR ESCENA DE PRUEBA
-        self.pixmap_item = QGraphicsPixmapItem()
-        self.scene.addItem(self.pixmap_item)
-        
-        
-        ellipse = QGraphicsEllipseItem(0, 0, 4, 4)
-        ellipse.setBrush(QBrush(QColor("red")))   # color de relleno
-        ellipse.setFlag(QGraphicsEllipseItem.ItemIsMovable, True)   # hacerlo draggable
-        ellipse.setFlag(QGraphicsEllipseItem.ItemIsSelectable, True) # seleccionable
-        self.scene.addItem(ellipse)
-        
-        # Item de imagen (se actualizará en update_streaming_frame)
-        self.pixmap_item = QGraphicsPixmapItem()
-        self.scene.addItem(self.pixmap_item)
-        
-        # Ejemplo: añadir un punto draggable
-        self.point = QGraphicsEllipseItem(0, 0, 4, 4)
-        self.point.setBrush(QBrush(QColor("red")))
-        self.point.setFlag(QGraphicsEllipseItem.ItemIsMovable, True)
-        self.scene.addItem(self.point)
-        
-       ## self.imagen_label = QLabel('viewing window')
-        
-       ## self.imagen_label.setAlignment(Qt.AlignCenter)
+        # Imagen principal
+
+        self.imagen_label = interactive_imageLabel('viewing window')
+        self.imagen_label.setAlignment(Qt.AlignCenter)
+    
+        self.imagen_label.installEventFilter(self)
         
         self.bar_options = QWidget()
         self.bar_options.setAttribute(Qt.WA_StyledBackground, True)
@@ -117,7 +99,7 @@ class Render_box(QFrame):
         self.text_fps = QLabel(f"Tasa de FPS: {self.current_fps}")
         self.text_fps.setObjectName('text-fps')
         
-        self.text_size = QLabel(f'Tamaño: {self.with_image}x{self.height_image}')
+        self.text_size = QLabel(f'Tamaño del cuadro: {self.with_image}x{self.height_image}')
         self.text_size.setObjectName('text-fps')
         
         bar_option_layout.addWidget(self.text_fps)
@@ -128,23 +110,12 @@ class Render_box(QFrame):
         bar_option_layout.addWidget(btn_pause)
         bar_option_layout.addWidget(btn_stop)
 
-        
 
-        self.stack.addWidget(self.view)
+
+        self.stack.addWidget(self.imagen_label)
         self.stack.addWidget(self.bar_options)  
-
-        # Hover en la imagen
-        ##self.imagen_label.installEventFilter(self)
-
-
-
-    def eventFilter(self, obj, event):
-        if obj is self.view:
-            if event.type() == QEvent.Enter:
-                self.bar_options.show()
-            elif event.type() == QEvent.Leave:
-                self.bar_options.hide()
-        return super().eventFilter(obj, event)
+      
+    
     
     
     # ---------------------------
@@ -206,8 +177,8 @@ class Render_box(QFrame):
             if not self.process.waitForFinished(3000):
                 self.process.kill()
             self.process = None
-            self.view.clear()
-            self.view.setText("viewing window")
+            self.imagen_label.clear()
+            self.imagen_label.setText("viewing window")
             self.close_socket()
 
 
@@ -275,13 +246,18 @@ class Render_box(QFrame):
                 
                 if not self.websocket == None: 
                     image_base64 = base64.b64encode(image_bytes).decode()
+                    result_coordinates = self.imagen_label.get_coordinates(self.width, self.height)
                     data_to_Send = {
-                        "header": header,
-                        "image" : image_base64
+                        'header': header,
+                        'image' : image_base64,
+                        'roi_coordinates': result_coordinates
                     }
                     self.websocket.sendTextMessage(json.dumps(data_to_Send))
-                    print('Mensaje enviado por WebSocket')
-                
+
+                    
+                    
+                    
+                    
             except (json.JSONDecodeError, Exception) as e:
                 # Ignorar errores y continuar con el siguiente par
                 pass
@@ -301,19 +277,19 @@ class Render_box(QFrame):
             else:
                 map = pixmap.loadFromData(frame, "PNG")
             if map:
-                if not hasattr(self, "cached_size") or self.cached_size != self.view.size():
-                    self.cached_size = self.view.size()
+                if not hasattr(self, "cached_size") or self.cached_size != self.imagen_label.size():
+                    self.cached_size = self.imagen_label.size()
                 size = pixmap.size()
                 self.width = size.width()
                 self.height = size.height()
-                self.text_size.setText(f'Tamaño: {self.width}x{self.height}')
+                self.text_size.setText(f'Tamaño del cuadro: {self.width}x{self.height}')
                 pixmap_escalada = pixmap.scaled(
                     self.cached_size,
                     Qt.IgnoreAspectRatio,
                     Qt.SmoothTransformation,
                 )
-                self.pixmap_item.setPixmap(pixmap_escalada)
-                print(self.pixmap_item.size())
+                self.imagen_label.setPixmap(pixmap_escalada)
+                print(self.imagen_label.size())
                 
                 
         except Exception as e:
@@ -333,7 +309,6 @@ class Render_box(QFrame):
 
     def dropEvent(self, event):
         try:
-            print()
             if event.mimeData().hasFormat("application/x-boxcap"):
                 raw = bytes(event.mimeData().data("application/x-boxcap")).decode("utf-8")
                 other_hwnd, other_title = raw.split("|", 1)
@@ -346,7 +321,7 @@ class Render_box(QFrame):
                 self.id_windows = int(other_hwnd)
                 self.title = other_title
                 event.acceptProposedAction()
-                print(self.id_windows)
+                
                 if self.websocket is None: self.init_websocket()
             else:
                 event.ignore()
@@ -356,6 +331,7 @@ class Render_box(QFrame):
             
             
     def init_websocket(self):        
+      
         self.websocket = QWebSocket()
         # 2. Conectar señales del QWebSocket a slots de la clase
         self.websocket.connected.connect(self.on_connected)
@@ -393,3 +369,6 @@ class Render_box(QFrame):
         
     def close_socket(self):
         self.websocket.close()
+
+
+
