@@ -3,6 +3,7 @@ import re
 import time
 
 
+
 from PySide6.QtWidgets import (
     QFrame, QWidget, QLabel, QHBoxLayout, QVBoxLayout, QGridLayout,
     QSizePolicy, QPushButton
@@ -59,6 +60,7 @@ class Render_box(QFrame):
         self.stack.setContentsMargins(0, 0, 0, 0)
 
         # Imagen principal
+
 
         self.imagen_label = interactive_imageLabel('viewing window')
         self.imagen_label.setAlignment(Qt.AlignCenter)

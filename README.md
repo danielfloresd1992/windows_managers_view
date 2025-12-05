@@ -1,36 +1,30 @@
 window_manager/
-    ├── main.py                 # Punto de entrada
-    ├── core/                   # Lógica de negocio
-    │   ├── __init__.py
-    │   ├── window_controller.py
-    │   ├── window_capture.py   # Nuevo: captura de ventanas
-    │   └── automation_engine.py
-    ├── native/
-    │   ├── CMakeLists.txt / setup.py      # Configuración de compilación   FUNCIONES MULTIPLATAFORMAS 
-    │   ├── window_manager.cpp/.h          # Funciones de gestión de ventanas (listar, activar, bloquear)
-    │   ├── window_capture.cpp/.h          # Captura de pantalla de ventanas
-    │   ├── input_controller.cpp/.h        # Simulación de input (clicks, teclado)
-    │   ├── utils.cpp/.h                   # Funciones auxiliares (conversión, errores, logging)
-    │   ├── bindings.cpp                   # Punto de entrada pybind11 que expone todo a Python
-    ├── gui/                    # Capa de presentación
-    │   ├── __init__.py
-    │   ├── main_window.py
-    │   ├── components/
-    │   │   ├── __init__.py
-    │   │   ├── window_list.py
-    │   │   ├── control_panel.py
-    │   │   └── window_preview.py  # Nuevo: previsualización en tiempo real
-    │   └── styles/
-    │       ├── __init__.py
-    │       └── theme.py
-    ├── models/                 # Modelos de datos
-    │   ├── __init__.py
-    │   └── window_data.py  
-    │   ├── __init__.py
-    │   └── helpers.py
-    └── config/                 # Configuración
-        ├── __init__.py
-        └── settings.py.
-
-
-    https://dribbble.com/shots/25543032-Sidebar-Design-Dark-mode
+├── main.py                     # Punto de entrada y inicialización de la app.
+|
+├── core/                       # Lógica de negocio (Controladores, lógica de captura).
+│   ├── ...
+│   └── window_controller.py
+|
+├── native/                     # Funciones C++ y Pybind11 para tareas nativas.
+│   ├── ...
+│   └── bindings.cpp
+|
+├── gui/                        # Capa de presentación (Widgets, Ventana principal).
+│   ├── main_window.py
+│   ├── components/
+│   │   ├── ...
+│   │   └── window_preview.py   # Contiene la clase interactive_imageLabel
+│   └── styles/
+│       └── theme.py
+|
+├── models/                     # Modelos de datos y la CLASE que maneja la persistencia.
+│   ├── __init__.py
+│   ├── window_data.py
+│   └── settings_model.py       # NUEVO: Clase central para cargar/guardar la configuración del usuario.
+|
+├── config/                     # Configuración estática y por defecto.
+│   ├── __init__.py
+│   └── default_settings.json   # NUEVO: Valores iniciales de los puntos, tema, etc.
+|
+└── data_user/                  # Ubicación LÓGICA donde se guardan los archivos de usuario.
+    └── user_settings.json      # ARCHIVO REAL: Se guarda en una ruta específica del SO (ej. %APPDATA%).ssss

@@ -73,9 +73,9 @@ def main():
         box4 = Render_box(frames_per_milliseconds=30)
 
         lh_top_layaut.addWidget(box1)
-        #lh_top_layaut.addWidget(box2)
-        #lh_bottom_layaut.addWidget(box3)
-        #lh_bottom_layaut.addWidget(box4)
+        lh_top_layaut.addWidget(box2)
+        lh_bottom_layaut.addWidget(box3)
+        lh_bottom_layaut.addWidget(box4)
         
         windowsPrincipal.add_center(asidebar)
 
@@ -84,7 +84,7 @@ def main():
         box_content_layaut = QVBoxLayout(box_content)
         box_content_layaut.setContentsMargins(0,0,0,0)
         box_content_layaut.addWidget(lh_top)
-        
+        box_content_layaut.addWidget(lh_bottom)
 
         windowsPrincipal.content_layaut.addWidget(box_content)
         
