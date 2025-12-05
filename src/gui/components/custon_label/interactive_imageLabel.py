@@ -7,6 +7,7 @@ from PySide6.QtGui import QPixmap, QMouseEvent, QPainter, QBrush, QPen, QMouseEv
 class interactive_imageLabel(QLabel):
     def __init__(self, parent=None):
         super().__init__(parent)
+        print('hola interactive_imageLabel')
         self.setMouseTracking(True) # Para detectar movimiento sin tener que presionar
         
         # 4 puntos iniciales almacenados como porcentaje (0 a 1000)
