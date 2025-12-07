@@ -360,7 +360,7 @@ class Render_box(QFrame):
         if data['status'] == 'success':
             processed_image = data['processed_image']
             self.update_streaming_frame(processed_image, type_image='base64')
-            self.open = True
+        self.open = True
        
         
         
