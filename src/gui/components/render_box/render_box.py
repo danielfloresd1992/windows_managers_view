@@ -125,6 +125,7 @@ class Render_box(QFrame):
     # ---------------------------
     def init_loop(self):
         try:
+           
             print(f"🔄 Iniciando loop para hwnd: {self.hwnd}")
             if hasattr(self.process, 'canReadLine') :print(self.process.canReadLine())
             if self.hwnd is None:
@@ -137,6 +138,7 @@ class Render_box(QFrame):
                 self.process.readyReadStandardOutput.connect(self.loop_show_result)
                 
                 # 🔥 USAR sys.executable EN LUGAR DE 'python'
+                self.open = True
                 python_exe = sys.executable  # Esto apunta al Python que ejecuta la aplicación
                 worker_script = 'src/workers/capture_woker.py'
                 arguments = [worker_script, str(self.hwnd)]
@@ -207,7 +209,8 @@ class Render_box(QFrame):
     def loop_show_result(self):
         if not self.process:
             return
-            
+        if self.open == False: return
+        self.open == False
         # Leer todos los datos disponibles
         data = self.process.readAllStandardOutput().data().decode('utf-8', errors='ignore')
         lines = data.strip().split('\n')
@@ -256,9 +259,6 @@ class Render_box(QFrame):
                     }
                     self.websocket.sendTextMessage(json.dumps(data_to_Send))
 
-                    
-                    
-                    
                     
             except (json.JSONDecodeError, Exception) as e:
                 # Ignorar errores y continuar con el siguiente par
@@ -359,6 +359,7 @@ class Render_box(QFrame):
         if data['status'] == 'success':
             processed_image = data['processed_image']
             self.update_streaming_frame(processed_image, type_image='base64')
+            self.open = True
        
         
         
