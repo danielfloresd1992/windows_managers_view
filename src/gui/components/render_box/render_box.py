@@ -209,8 +209,12 @@ class Render_box(QFrame):
     def loop_show_result(self):
         if not self.process:
             return
-        if self.open == False: return
-        self.open == False
+        
+        if self.open == False: 
+            print('Frame skipped lossing fps')
+            return
+        self.open = False
+        
         # Leer todos los datos disponibles
         data = self.process.readAllStandardOutput().data().decode('utf-8', errors='ignore')
         lines = data.strip().split('\n')
@@ -258,7 +262,8 @@ class Render_box(QFrame):
                         'roi_coordinates': result_coordinates
                     }
                     self.websocket.sendTextMessage(json.dumps(data_to_Send))
-
+                    print('frame sent to websocket')
+                    #self.update_streaming_frame(image_base64, type_image='base64', tets=True)
                     
             except (json.JSONDecodeError, Exception) as e:
                 # Ignorar errores y continuar con el siguiente par
@@ -269,9 +274,10 @@ class Render_box(QFrame):
             
         
         
-    def update_streaming_frame(self, frame, type_image='base64'):
+    def update_streaming_frame(self, frame, type_image='base64', tets=False):
         try:
             pixmap = QPixmap()
+           
             map = False
             if type_image == 'base64':
                 base64_str = re.sub(r'^data:image/\w+;base64,', '', frame)
@@ -292,7 +298,9 @@ class Render_box(QFrame):
                     Qt.SmoothTransformation,
                 )
                 self.imagen_label.setPixmap(pixmap_escalada)
-                print(self.imagen_label.size())
+                
+                if tets:
+                    self.open = True
                 
                 
         except Exception as e:
@@ -356,11 +364,17 @@ class Render_box(QFrame):
     @Slot(str)
     def on_text_message_received(self, message):
         """Manejador llamado cuando se recibe un mensaje de texto."""
-        data = json.loads(message)
-        if data['status'] == 'success':
-            processed_image = data['processed_image']
-            self.update_streaming_frame(processed_image, type_image='base64')
-        self.open = True
+        try:
+            data = json.loads(message)
+            if data['status'] == 'success':
+                processed_image = data['processed_image']
+                self.update_streaming_frame(processed_image, type_image='base64')
+            if data['status'] == 'error':
+                raise Exception(data.get('message', 'Error desconocido del servidor'))
+        except Exception as e:
+            print(f"💥 Error al procesar mensaje WebSocket: {e}")
+        finally:
+            self.open = True
        
         
         
