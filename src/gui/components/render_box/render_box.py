@@ -262,7 +262,8 @@ class Render_box(QFrame):
                     
             except (json.JSONDecodeError, Exception) as e:
                 # Ignorar errores y continuar con el siguiente par
-                pass
+                self.open = True
+                print(f"💥 Error procesando líneas: {e}")
             i += 2
             
             
