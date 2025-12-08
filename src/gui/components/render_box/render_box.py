@@ -32,7 +32,7 @@ class Render_box(QFrame):
     
     def __init__(self, frames_per_milliseconds=100):
         super().__init__()
-        
+        self.open = True
         self.setAcceptDrops(True)
         
         self.analytical_mode = False
@@ -138,7 +138,6 @@ class Render_box(QFrame):
                 self.process.readyReadStandardOutput.connect(self.loop_show_result)
                 
                 # 🔥 USAR sys.executable EN LUGAR DE 'python'
-                self.open = True
                 python_exe = sys.executable  # Esto apunta al Python que ejecuta la aplicación
                 worker_script = 'src/workers/capture_woker.py'
                 arguments = [worker_script, str(self.hwnd)]
@@ -199,7 +198,7 @@ class Render_box(QFrame):
             image = pil_image_to_png_bytes(buffer)
             if image is None:
                 return
-            self.update_streaming_frame(image, type_image='bytes')
+            self.update_streaming_frame(image, type_image='bytes', tets = False)
             self.bar_options.raise_()
         except Exception as e:
             print(f"💥 Error: {e}")
@@ -209,12 +208,7 @@ class Render_box(QFrame):
     def loop_show_result(self):
         if not self.process:
             return
-        
-        if self.open == False: 
-            print('Frame skipped lossing fps')
-            return
-        self.open = False
-        
+
         # Leer todos los datos disponibles
         data = self.process.readAllStandardOutput().data().decode('utf-8', errors='ignore')
         lines = data.strip().split('\n')
@@ -222,6 +216,8 @@ class Render_box(QFrame):
         # Procesar las líneas en pares (header e imagen)
         i = 0
         while i < len(lines) - 1:
+
+
             line1 = lines[i].strip()
             line2 = lines[i+1].strip()
             # Si la primera línea está vacía, saltar
@@ -261,8 +257,14 @@ class Render_box(QFrame):
                         'image' : image_base64,
                         'roi_coordinates': result_coordinates
                     }
-                    self.websocket.sendTextMessage(json.dumps(data_to_Send))
-                    print('frame sent to websocket')
+                    
+                    if self.open == True:
+                        self.open = False
+                        self.websocket.sendTextMessage(json.dumps(data_to_Send))
+                        print('frame sent to websocket')
+                    else:
+                        print('websocket busy, frame skipped')
+                        
                     #self.update_streaming_frame(image_base64, type_image='base64', tets=True)
                     
             except (json.JSONDecodeError, Exception) as e:
@@ -276,6 +278,7 @@ class Render_box(QFrame):
         
     def update_streaming_frame(self, frame, type_image='base64', tets=False):
         try:
+            if tets: self.open = True
             pixmap = QPixmap()
            
             map = False
@@ -299,15 +302,12 @@ class Render_box(QFrame):
                 )
                 self.imagen_label.setPixmap(pixmap_escalada)
                 
-                if tets:
-                    self.open = True
-                
                 
         except Exception as e:
             print(f"💥 Error en update_streaming_frame: {e}")
+
+            
         
-    
-    
 
 
     def dragEnterEvent(self, event):
@@ -358,7 +358,7 @@ class Render_box(QFrame):
     def on_connected(self):
         """Manejador llamado cuando la conexión WebSocket se ha establecido."""
         print("Conexión WebSocket establecida.")
-        # Ejemplo: Envía un mensaje inicial
+       
       
 
     @Slot(str)
@@ -375,10 +375,10 @@ class Render_box(QFrame):
             print(f"💥 Error al procesar mensaje WebSocket: {e}")
         finally:
             self.open = True
+
        
         
-        
-
+    
     @Slot()
     def on_disconnected(self):
         """Manejador llamado cuando la conexión WebSocket se cierra."""
@@ -387,6 +387,3 @@ class Render_box(QFrame):
         
     def close_socket(self):
         self.websocket.close()
-
-
-
