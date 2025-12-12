@@ -71,11 +71,17 @@ def main():
         box2 = Render_box(frames_per_milliseconds=30)
         box3 = Render_box(frames_per_milliseconds=30)
         box4 = Render_box(frames_per_milliseconds=30)
-
+        box5 = Render_box(frames_per_milliseconds=30)
+        box6 = Render_box(frames_per_milliseconds=30)
+        
+        
         lh_top_layaut.addWidget(box1)
         lh_top_layaut.addWidget(box2)
-        lh_bottom_layaut.addWidget(box3)
+        #lh_top_layaut.addWidget(box3)
+        
         lh_bottom_layaut.addWidget(box4)
+        lh_bottom_layaut.addWidget(box5)
+        #lh_bottom_layaut.addWidget(box6)
         
         windowsPrincipal.add_center(asidebar)
 

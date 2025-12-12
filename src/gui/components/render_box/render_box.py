@@ -54,25 +54,52 @@ class Render_box(QFrame):
 
 
     def setup_ui(self):
+        
+        """__________🗳️CONTENEDOR PRINCIPAL🗳️___________"""
         self.setObjectName('box-content')
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.stack = QVBoxLayout(self)   # renombrado para no chocar con QWidget.layout()
         self.stack.setContentsMargins(0, 0, 0, 0)
 
-        # Imagen principal
+        
+       
+
+        """__________📃BARRA DE INFORMACIÓN📃__________"""
+        self.bar_info = QWidget()
+        self.bar_info.setAttribute(Qt.WA_StyledBackground, True)
+        self.bar_info.setMaximumHeight(30)
+        self.bar_info.setObjectName("bar_options")
+        self.bar_info_layout = QHBoxLayout(self.bar_info)
+
+        self.text_fps = QLabel(f"Tasa de FPS: {self.current_fps}")
+        self.text_fps.setObjectName('text-fps')
+        self.text_size = QLabel(f'Tamaño del cuadro: {self.with_image}x{self.height_image}')
+        self.text_size.setObjectName('text-fps')
+        
+        self.bar_info_layout.addWidget(self.text_fps)
+        self.bar_info_layout.addWidget(self.text_size)
+
+        "inserción______⤵️_______"
+        self.stack.addWidget(self.bar_info) 
+        
+        
 
 
+        """__________🖼️CONTENEDOR DE IMAGEN🖼️__________"""
         self.imagen_label = interactive_imageLabel('viewing window')
         self.imagen_label.setAlignment(Qt.AlignCenter)
     
         self.imagen_label.installEventFilter(self)
-        
+        "inserción______⤵️_______"
+        self.stack.addWidget(self.imagen_label) 
+
+
+
+        """____________⏏️BARRA DE BOTONES🔘_____________"""
         self.bar_options = QWidget()
         self.bar_options.setAttribute(Qt.WA_StyledBackground, True)
         self.bar_options.setMaximumHeight(30)
         self.bar_options.setObjectName("bar_options")
-       
-
 
         bar_option_layout = QHBoxLayout(self.bar_options)
         bar_option_layout.setContentsMargins(10, 0, 10, 0)
@@ -98,26 +125,18 @@ class Render_box(QFrame):
         btn_pause.clicked.connect(self.pause_loop)
         btn_stop.clicked.connect(self.detroy_loop)
 
-        self.text_fps = QLabel(f"Tasa de FPS: {self.current_fps}")
-        self.text_fps.setObjectName('text-fps')
-        
-        self.text_size = QLabel(f'Tamaño del cuadro: {self.with_image}x{self.height_image}')
-        self.text_size.setObjectName('text-fps')
-        
-        bar_option_layout.addWidget(self.text_fps)
-        bar_option_layout.addWidget(self.text_size)
         bar_option_layout.addStretch(1)
         bar_option_layout.addWidget(self.btn_cap)
         bar_option_layout.addWidget(btn_play)
         bar_option_layout.addWidget(btn_pause)
         bar_option_layout.addWidget(btn_stop)
-
-
-
-        self.stack.addWidget(self.imagen_label)
+        "inserción______⤵️_______"
         self.stack.addWidget(self.bar_options)  
-      
-    
+        
+        
+
+        
+        
     
     
     # ---------------------------
@@ -278,9 +297,8 @@ class Render_box(QFrame):
         
     def update_streaming_frame(self, frame, type_image='base64', tets=False):
         try:
-            if tets: self.open = True
+            if tets == True: self.open = True
             pixmap = QPixmap()
-           
             map = False
             if type_image == 'base64':
                 base64_str = re.sub(r'^data:image/\w+;base64,', '', frame)
@@ -368,7 +386,7 @@ class Render_box(QFrame):
             data = json.loads(message)
             if data['status'] == 'success':
                 processed_image = data['processed_image']
-                self.update_streaming_frame(processed_image, type_image='base64')
+                self.update_streaming_frame(processed_image, type_image='base64', tets=False)
             if data['status'] == 'error':
                 raise Exception(data.get('message', 'Error desconocido del servidor'))
         except Exception as e:
