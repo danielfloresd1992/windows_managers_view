@@ -1,12 +1,15 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout,QHBoxLayout, QLabel, QScrollArea
-from PySide6.QtCore import Qt, Slot
+from PySide6.QtWidgets import QWidget, QVBoxLayout,QHBoxLayout, QLabel, QScrollArea, QToolBox, QListWidget
+from PySide6.QtCore import Qt, Slot, QPropertyAnimation, QRect
 from PySide6.QtGui import QPixmap
 
 from core.window_global import windows_monitor
 
 from gui.components.box_image import Box_cap
 
-
+"""
+ toolbox = QToolBox()
+        toolbox.addItem(QListWidget(), "Lista A")
+"""
 
 
 class Sidebar_Dock(QWidget):
@@ -53,25 +56,37 @@ class Sidebar_Dock(QWidget):
         header_layaut.addWidget(img_image)
         header_layaut.addWidget(text_title)
 
+        '''
         self.scroll_area = QScrollArea()
         self.scroll_area.setAttribute(Qt.WA_StyledBackground, True)
         self.scroll_area.setObjectName('ScrollAreaSidebar')
         # Opcional pero recomendado: Hace que el scroll area ocupe todo el espacio disponible
         self.scroll_area.setWidgetResizable(True)
-
+        
+        '''
+        
         content_center = QWidget()
         content_center.setAttribute(Qt.WA_StyledBackground, True)
         content_center.setObjectName('ContentSidebar')
         self.content_layaut = QVBoxLayout(content_center)
         self.content_layaut.setContentsMargins(0,0,0,0)
         self.content_layaut.setAlignment(Qt.AlignTop| Qt.AlignHCenter)
-        self.scroll_area.setWidget(content_center)
+        
+        #self.scroll_area.setWidget(content_center)
 
+        
+        toolbox = QToolBox()
+        toolbox.addItem(content_center, 'Ventanas de windows')
+        toolbox.addItem(QWidget(), 'Lista de disposivos')
+
+        toolbox.setCurrentIndex(-1)
+            
         layout_dock.addWidget(header, alignment=Qt.AlignTop)
-        layout_dock.addWidget(self.scroll_area)
-
-
-
+        layout_dock.addWidget(toolbox)
+        
+       
+    
+    
 
     
     def print_list(self, list_windows):
@@ -79,7 +94,6 @@ class Sidebar_Dock(QWidget):
         if(list_windows):
             for window in list_windows:
                 box_cap = Box_cap(window)
-
 
                 self.content_layaut.addWidget(box_cap)
 

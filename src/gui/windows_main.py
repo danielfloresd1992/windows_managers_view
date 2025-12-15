@@ -65,7 +65,9 @@ class MainWindow(QMainWindow):
         status.setAttribute(Qt.WA_StyledBackground, True)
         status.setFixedHeight(35)
         status.setObjectName('FooterBar')
-        status.showMessage('Listo para responder')
+        
+        status.showMessage('Servidor Activo')
+        
         status.setStyleSheet("QStatusBar { background-color: #424242; color: white; }")
         "inserción______⤵️_______"
         self.window_child.setStatusBar(status)
@@ -78,13 +80,16 @@ class MainWindow(QMainWindow):
         status.addPermanentWidget(btn)
         
         
-    def open_dialog(self, event):
+        
+        
+        
+    def open_dialog(self):
         dlg = QDialog(parent=self)
         dlg.setFixedHeight(180)
         dlg.setFixedWidth(260)
         dlg.setStyleSheet("QDialog { background-color: #424242; color: white; }")
         dlg.setWindowFlags(Qt.Dialog | Qt.FramelessWindowHint)  # sin barra de título
-        #dlg.setWindowFlags(dlg.windowFlags() | Qt.WindowStaysOnTopHint) 
+        dlg.setWindowFlags(dlg.windowFlags() | Qt.WindowStaysOnTopHint) 
         
         def close_dlg():
             dlg.close()

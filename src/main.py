@@ -4,7 +4,6 @@ import numpy as np
 from PIL import Image
 
 
-
 ### MODELS AND DATA
 from model.windows.list_windows import open_windows_windows
 
@@ -21,7 +20,7 @@ from core.app_singleton import  AppSingleton
 ##from gui.windows_main import MainWindow
 
 from PySide6.QtGui import QPixmap
-from PySide6.QtWidgets import QGridLayout, QHBoxLayout, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QGridLayout, QHBoxLayout, QVBoxLayout, QWidget, QDockWidget, QTextEdit
 from PySide6.QtCore import Qt
 
 from gui.windows_main import MainWindow 
@@ -47,20 +46,47 @@ def load_stylesheet():
 
 def main():
     try:
+        list_windows = open_windows_windows()
         app = AppSingleton.initialize(sys.argv)
         app.setStyleSheet(load_stylesheet())
-
+        
         splashScreen = SplashScreen()
         splashScreen.show()
 
-        windowsPrincipal = MainWindow()
-    
-        #asidebar = Sidebar_Dock(windowsPrincipal, title='Ventanas disponibles', src_ico='src/resources/ico.png')
-        
-       
+        window_containter = MainWindow()
+        windowsPrincipal = window_containter.window_child 
     
         
-        windowsPrincipal.show()
+        
+        asidebar = Sidebar_Dock(parent=None, title='Visión', src_ico='src/resources/ico.png')
+        asidebar.print_list(list_windows)
+        
+        dock = QDockWidget(None)
+        dock.setWidget(asidebar)
+        dock.setStyleSheet("""
+            QDockWidget::title {
+                padding: 0px;       /* elimina espacio interno */
+                margin: 0px;        /* elimina espacio externo */
+                spacing: 0px;       /* elimina separación entre ícono y texto */
+                text-align: center; /* centra el texto */
+            }
+            QDockWidget::close-button, QDockWidget::float-button {
+                width: 0px;
+                height: 0px;
+            }
+        """)
+        
+        dock.setFeatures(QDockWidget.NoDockWidgetFeatures)
+        dock.setTitleBarWidget(QWidget())
+        windowsPrincipal.addDockWidget(Qt.LeftDockWidgetArea, dock)  # lo acoplas a la izquierda
+    
+    
+        box = Render_box()
+        windowsPrincipal.setCentralWidget(box)
+        
+        
+        
+        window_containter.show()
         splashScreen.finish(windowsPrincipal)
 
         return app.exec()
