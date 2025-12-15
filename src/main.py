@@ -54,45 +54,11 @@ def main():
         splashScreen.show()
 
         windowsPrincipal = MainWindow()
-
-        asidebar = Sidebar_Dock(windowsPrincipal, title='Ventanas disponibles', src_ico='src/resources/ico.png')
-        asidebar.print_list(open_windows_windows())
-
-        lh_top = QWidget()
-        lh_top_layaut = QHBoxLayout(lh_top)
-        lh_top_layaut.setContentsMargins(0,0,0,0)
-
-        lh_bottom = QWidget()
-        lh_bottom_layaut = QHBoxLayout(lh_bottom)
-        lh_bottom_layaut.setContentsMargins(0,0,0,0)
-
-
-        box1 = Render_box(frames_per_milliseconds=30)
-        box2 = Render_box(frames_per_milliseconds=30)
-        box3 = Render_box(frames_per_milliseconds=30)
-        box4 = Render_box(frames_per_milliseconds=30)
-        box5 = Render_box(frames_per_milliseconds=30)
-        box6 = Render_box(frames_per_milliseconds=30)
-        
-        
-        lh_top_layaut.addWidget(box1)
-        lh_top_layaut.addWidget(box2)
-        #lh_top_layaut.addWidget(box3)
-        
-        lh_bottom_layaut.addWidget(box4)
-        lh_bottom_layaut.addWidget(box5)
-        #lh_bottom_layaut.addWidget(box6)
-        
-        windowsPrincipal.add_center(asidebar)
-
     
-        box_content = QWidget()
-        box_content_layaut = QVBoxLayout(box_content)
-        box_content_layaut.setContentsMargins(0,0,0,0)
-        box_content_layaut.addWidget(lh_top)
-        box_content_layaut.addWidget(lh_bottom)
-
-        windowsPrincipal.content_layaut.addWidget(box_content)
+        #asidebar = Sidebar_Dock(windowsPrincipal, title='Ventanas disponibles', src_ico='src/resources/ico.png')
+        
+       
+    
         
         windowsPrincipal.show()
         splashScreen.finish(windowsPrincipal)

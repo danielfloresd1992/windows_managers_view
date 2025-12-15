@@ -1,7 +1,7 @@
 import sys
 import os
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QVBoxLayout, QWidget, QHBoxLayout, QPushButton, QLabel, QSizePolicy
+from PySide6.QtWidgets import QVBoxLayout, QWidget, QHBoxLayout, QPushButton, QLabel, QSizePolicy, QStatusBar
 from PySide6.QtGui import QMouseEvent
 from dotenv import load_dotenv
 
@@ -44,6 +44,7 @@ class CustomTitleBar(QWidget):
 
 
         btn_minimize = QPushButton('_')
+        btn_minimize.setAttribute(Qt.WA_StyledBackground, True)
         btn_minimize.setFixedHeight(40)
         btn_minimize.setObjectName('MinimizeButton')
         btn_minimize.clicked.connect(self.parent().showMinimized)

@@ -1,10 +1,10 @@
-from PySide6.QtWidgets import QApplication, QMainWindow, QHBoxLayout, QWidget, QVBoxLayout, QLabel, QPushButton, QSizePolicy, QGridLayout
+from PySide6.QtWidgets import QApplication, QMainWindow,  QHBoxLayout, QWidget, QVBoxLayout, QLabel,QStatusBar, QPushButton, QSizePolicy, QGridLayout, QDialog
 from PySide6.QtCore import Qt, QRect
-from PySide6.QtGui import QCursor
+from PySide6.QtGui import QCursor, QIcon
 
 
 from gui.components.title_bar.window_bar import CustomTitleBar
-
+from gui.components.custon_btn.btn_footer import BtnIco
 
 
 
@@ -19,7 +19,7 @@ class MainWindow(QMainWindow):
         self.setObjectName('MainWindowStyle')
         self.setAttribute(Qt.WA_StyledBackground, True)
         self.setWindowFlag(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
-
+        self.setContentsMargins(0,0,0,0)
         # variables internas para resize
         self._resizing = False
         self._resize_direction = None
@@ -31,7 +31,7 @@ class MainWindow(QMainWindow):
 
         # 🔑 activar mouse tracking en toda la jerarquía
         self.setMouseTracking(True)
-        self.centralWidget().setMouseTracking(True)
+     #   self.centralWidget().setMouseTracking(True)
         for child in self.findChildren(QWidget):
             child.setMouseTracking(True)
 
@@ -41,32 +41,91 @@ class MainWindow(QMainWindow):
        
         self.resize(1024, 768)
 
-        # CONTENEDOR PRINCIPAL
-        central_widget = QWidget()
-        main_layout = QVBoxLayout(central_widget)
-        main_layout.setContentsMargins(0,0,0,0)
-        main_layout.setSpacing(0)
-
-        # DECLARACIÓN DE COMPONENTES PRINCIPALES
-        self.title_bar = CustomTitleBar(self)
-
-        self.setCentralWidget(central_widget)
-
-        content_center = QWidget()
-        self.content_layaut = QHBoxLayout(content_center)
-        self.content_layaut.setContentsMargins(0,0,0,0)
-        content_center.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
-        # INTRIDUCIÓN DE COMPÓNENTES PRNCIPALES
-        main_layout.addWidget(self.title_bar)
-        main_layout.addWidget(content_center)
+        main_content = QWidget()
+        main_content.setContentsMargins(0,0,0,0)
+        self.layout_main = QVBoxLayout(main_content)
+        self.layout_main.setContentsMargins(0,0,0,0)
+        "inserción______⤵️_______"
+        self.setCentralWidget(main_content)
 
 
+        title_bar = CustomTitleBar(self)
+        self.layout_main.addWidget(title_bar)
+        "inserción______⤵️_______"
+   
+   
+        self.window_child = QMainWindow()
+        self.window_child.setAttribute(Qt.WA_StyledBackground, True)
+        self.window_child.setWindowFlag(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        "inserción______⤵️_______"
+        self.layout_main.addWidget(self.window_child)
+        
+        
+        status = QStatusBar()
+        status.setAttribute(Qt.WA_StyledBackground, True)
+        status.setFixedHeight(35)
+        status.setObjectName('FooterBar')
+        status.showMessage('Listo para responder')
+        status.setStyleSheet("QStatusBar { background-color: #424242; color: white; }")
+        "inserción______⤵️_______"
+        self.window_child.setStatusBar(status)
+        
 
-    def add_center(self, component):
-        self.content_layaut.addWidget(component)
+        btn = BtnIco(ico_path='resource/layout.png', title='Divisiones de ventanas: (3x3, 2x2, etc.)')
+        btn.clicked.connect(self.open_dialog)
 
+        "inserción______⤵️_______"
+        status.addPermanentWidget(btn)
+        
+        
+    def open_dialog(self, event):
+        dlg = QDialog(parent=self)
+        dlg.setFixedHeight(180)
+        dlg.setFixedWidth(260)
+        dlg.setStyleSheet("QDialog { background-color: #424242; color: white; }")
+        dlg.setWindowFlags(Qt.Dialog | Qt.FramelessWindowHint)  # sin barra de título
+        #dlg.setWindowFlags(dlg.windowFlags() | Qt.WindowStaysOnTopHint) 
+        
+        def close_dlg():
+            dlg.close()
+  
+        contain_layout = QVBoxLayout()
+        
+        title = QLabel('Divisiones de las ventanas')
+        title.setAlignment(Qt.AlignCenter)
+        contain_layout.addWidget(title)
+      
+        btn_one = BtnIco(ico_path='resource/1-.png', title='Una ventana principal')
+        btn_quad = BtnIco(ico_path='resource/2x2-.png', title='2 X 2')
+        btn_nine = BtnIco(ico_path='resource/3x3-.png', title='9 X 9')
+        btn_max = BtnIco(ico_path='resource/4x4-.png', title='4 X 4')
+        btn_layout = QHBoxLayout()
+        btn_layout.addStretch()
+        btn_layout.addWidget(btn_one)
+        btn_layout.addWidget(btn_quad)
+        btn_layout.addWidget(btn_nine)
+        btn_layout.addWidget(btn_max)
+        btn_layout.addStretch()
+        
+        contain_layout.addLayout(btn_layout, stretch=1)
+        contain_layout.setAlignment(Qt.AlignCenter)  # centra todo el contenido
 
+        btn_cancel = QPushButton('Cancelar')
+        btn_cancel.setCursor(Qt.PointingHandCursor)
+        btn_cancel.setStyleSheet("""
+            QPushButton {
+                background-color: transparent;
+                border: none;
+                text-decoration: underline;
+                color: #ffffff
+            }             
+        """)
+        btn_cancel.clicked.connect(close_dlg)
+        contain_layout.addWidget(btn_cancel, alignment=Qt.AlignCenter)
+        dlg.setLayout(contain_layout)
+        dlg.exec()
+            
+    
 
     def center_windows(self):
         screen = QApplication.primaryScreen()
@@ -167,3 +226,7 @@ class MainWindow(QMainWindow):
         # respetar tamaño mínimo
         if geom.width() >= self.minimumWidth() and geom.height() >= self.minimumHeight():
             self.setGeometry(geom)
+            
+            
+            
+            

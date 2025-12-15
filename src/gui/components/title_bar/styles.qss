@@ -2,9 +2,7 @@
 
 
 #title_bar {
-    background-color: #181818;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
+    background-color: #252525;
 }
 
 /* Texto del título */
@@ -20,7 +18,7 @@ QPushButton#MinimizeButton,
 QPushButton#MaximizeButton,
 QPushButton#CloseButton {
     border: none;
-    background-color: #000000;
+    background-color: #252525;
     color: white;
     font-weight: bold;
     font-size: 14px;

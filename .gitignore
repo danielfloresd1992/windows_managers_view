@@ -4,3 +4,4 @@ src/native/build
 compilate.bat
 dist/
 build/
+env/

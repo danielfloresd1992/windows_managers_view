@@ -5,6 +5,11 @@ QMainWindow{
     background-color: #000000;
 }
 
+
+QPushButton{
+    background-color: #ffffffff;
+}
+
 ScrollAreaSidebar{
     border: none
 }
@@ -103,6 +108,8 @@ ScrollAreaSidebar{
     color:#fe0;
     font-weight: bold;
 }
+
+
 #btn-bar{
     min-width: 20px;
     min-height: 20px;
@@ -116,6 +123,8 @@ ScrollAreaSidebar{
     border: 1px solid #dadada;
     color: #ffffff;
 }
+
+
 
 
 QLabel{
@@ -141,4 +150,10 @@ QWidget#Head {
         stop:0 #333333, stop:1 #292929
     );
     border-bottom: 1px solid #333333;
+}
+
+
+
+#FooterBar {
+    background-color: #3498db; color: white;
 }
