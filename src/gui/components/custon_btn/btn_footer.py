@@ -5,12 +5,12 @@ from PySide6.QtCore import QSize, Qt
 
 class BtnIco(QPushButton):
     
-    def __init__(self, ico_path='', title='', *args, **kwargs):
+    def __init__(self, ico_path='', title='', h = 30, w = 30, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setIcon(QIcon(ico_path))
         
-        self.setFixedHeight(30)
-        self.setFixedWidth(30)
+        self.setFixedHeight(h)
+        self.setFixedWidth(w)
         self.setStyleSheet("""
             QPushButton {
                 background-color: transparent;

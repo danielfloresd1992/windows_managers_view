@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout,QHBoxLayout, QLabel, QScrollArea, QToolBox, QListWidget
+from PySide6.QtWidgets import QWidget, QVBoxLayout,QHBoxLayout, QLabel, QScrollArea, QToolBox, QListWidget, QAbstractButton
 from PySide6.QtCore import Qt, Slot, QPropertyAnimation, QRect
 from PySide6.QtGui import QPixmap
 
@@ -78,11 +78,16 @@ class Sidebar_Dock(QWidget):
         toolbox = QToolBox()
         toolbox.addItem(content_center, 'Ventanas de windows')
         toolbox.addItem(QWidget(), 'Lista de disposivos')
-
-        toolbox.setCurrentIndex(-1)
+        
+        empt_widget = QWidget()
+        index_empt = toolbox.addItem(empt_widget, "")
+        toolbox.setCurrentIndex(index_empt)
+        toolbox.setItemEnabled(index_empt, False)
+        toolbox.findChildren(QAbstractButton)
             
         layout_dock.addWidget(header, alignment=Qt.AlignTop)
         layout_dock.addWidget(toolbox)
+        
         
        
     

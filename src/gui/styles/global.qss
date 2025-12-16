@@ -96,8 +96,19 @@ ScrollAreaSidebar{
 
 
 #box-content{
-    border: 1px solid #dadada;
+   background-color: transparent;
+    border: 1px solid #292929; /* Borde normal: Gris Oscuro */
+    padding: 0;
 }
+#box-content:hover{
+    border: 1px solid #d6d6d6ff; /* Forzar el borde a Gris Oscuro (o 'none') */
+}
+#box-content:focus {
+    outline: none; /* Eliminar el contorno de foco por defecto del SO */
+    border: 1px solid #1b1b1bff; /* Forzar el borde a Gris Oscuro (o 'none') */
+}
+
+
 
 #bar_options{
     padding: 0px;
@@ -106,7 +117,7 @@ ScrollAreaSidebar{
 }
 #text-fps{
     color:#fe0;
-    font-weight: bold;
+    font-size: 10px;
 }
 
 

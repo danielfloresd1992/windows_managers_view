@@ -1,10 +1,12 @@
-from PySide6.QtWidgets import QApplication, QMainWindow,  QHBoxLayout, QWidget, QVBoxLayout, QLabel,QStatusBar, QPushButton, QSizePolicy, QGridLayout, QDialog
+from PySide6.QtWidgets import QApplication, QMainWindow,  QHBoxLayout, QWidget, QVBoxLayout, QLabel,QStatusBar, QPushButton, QSizePolicy, QGridLayout, QDialog, QTabWidget
 from PySide6.QtCore import Qt, QRect
 from PySide6.QtGui import QCursor, QIcon
 
 
 from gui.components.title_bar.window_bar import CustomTitleBar
 from gui.components.custon_btn.btn_footer import BtnIco
+from gui.components.render_box.render_box import  Render_box
+
 
 
 
@@ -25,6 +27,10 @@ class MainWindow(QMainWindow):
         self._resize_direction = None
         self._start_pos = None
         self._start_geom = None
+        
+        self.list_box = []
+        
+            
 
         self.setup_ui()
         self.center_windows()
@@ -35,6 +41,10 @@ class MainWindow(QMainWindow):
         for child in self.findChildren(QWidget):
             child.setMouseTracking(True)
 
+        
+        self._create_list_box()
+        "inserción______⤵️_______"
+        self.append_renderbox(4, add=True)
 
 
     def setup_ui(self):
@@ -61,6 +71,59 @@ class MainWindow(QMainWindow):
         self.layout_main.addWidget(self.window_child)
         
         
+        """______PESTAÑAS______"""
+        self.tabs = QTabWidget()
+        self.tabs.setContentsMargins(0, 0, 0, 0)
+        self.tabs.setStyleSheet("""
+            QTabBar::tab {
+                /* 1. Fondo */
+                background: #292929; /* Color gris claro */
+                
+                /* 2. Borde */
+               
+                border-bottom: none; /* Quitamos el borde inferior para que se pegue al contenido */
+                border-top-left-radius: 4px; /* Esquinas superiores redondeadas */
+                border-top-right-radius: 4px;
+                
+                /* 3. Espacio interno (Padding) */
+                padding: 8px 12px; /* Aumenta el alto y ancho de la pestaña */
+                
+                /* 4. Fuente */
+                color: #ffffff; /* Texto gris oscuro */
+                font-size: 10pt;
+            }
+            QTabWidget {
+                background-color: transparent;
+                border: 0;
+                padding: 0;
+            }
+        """)        
+        "inserción______⤵️_______"
+        self.window_child.setCentralWidget(self.tabs)
+        
+        
+        
+        """__________VIEW_________"""
+        content_box = QWidget()
+        content_box.setObjectName('TabContent')
+      
+        self.content_box_layout = QGridLayout(content_box)
+        self.content_box_layout.setSpacing(0)
+        self.content_box_layout.setContentsMargins(0,0,0,0)
+       
+        "inserción______⤵️_______"
+        self.tabs.addTab(content_box, 'Smart Streaming')
+        
+        
+        
+        """PESTAÑA DE DISPOSITIVOS"""
+        content_box = QWidget()
+        "inserción______⤵️_______"
+        self.tabs.addTab(content_box, 'Dispositivos')
+        
+        
+        
+        """____BARRA DE OPCIONES___"""
         status = QStatusBar()
         status.setAttribute(Qt.WA_StyledBackground, True)
         status.setFixedHeight(35)
@@ -75,10 +138,52 @@ class MainWindow(QMainWindow):
 
         btn = BtnIco(ico_path='resource/layout.png', title='Divisiones de ventanas: (3x3, 2x2, etc.)')
         btn.clicked.connect(self.open_dialog)
-
         "inserción______⤵️_______"
         status.addPermanentWidget(btn)
         
+        
+    
+    
+    def append_renderbox(self, amount: int = 2, add=False):
+    
+            
+        spaces_total = 12
+        amount_total = amount * amount
+            
+        amount_box = 0
+        row = 0
+        while row < amount:
+            col = 0
+            while col < amount:
+                    
+                if add:
+                    box_seleted = self.list_box[amount_box]
+                    self.content_box_layout.addWidget(box_seleted, row, col)
+               
+                else:
+                    box_seleted = self.list_box[amount_box]
+                    if amount_box  >= amount_total:
+                        self.content_box_layout.removeWidget(box_seleted)
+                    else:
+                        self.content_box_layout.removeWidget(box_seleted)
+                        self.content_box_layout.addWidget(box_seleted, row, col)
+                        box_seleted.show()
+                        
+                        
+                amount_box = amount_box + 1
+                col = col + 1
+            row = row + 1
+            
+        
+       
+        
+        
+            
+            
+    def _create_list_box(self):
+        while len(self.list_box) < 16:
+            box = Render_box(index=len(self.list_box))
+            self.list_box.append(box)
         
         
         
@@ -100,10 +205,18 @@ class MainWindow(QMainWindow):
         title.setAlignment(Qt.AlignCenter)
         contain_layout.addWidget(title)
       
-        btn_one = BtnIco(ico_path='resource/1-.png', title='Una ventana principal')
-        btn_quad = BtnIco(ico_path='resource/2x2-.png', title='2 X 2')
-        btn_nine = BtnIco(ico_path='resource/3x3-.png', title='9 X 9')
-        btn_max = BtnIco(ico_path='resource/4x4-.png', title='4 X 4')
+        btn_one = BtnIco(ico_path='resource/1-.png', title='Una ventana principal', h=40, w=40)
+        btn_one.clicked.connect(lambda checked=False: self.append_renderbox(amount=1))
+ 
+        btn_quad = BtnIco(ico_path='resource/2x2-.png', title='2 X 2', h=40, w=40)
+        btn_quad.clicked.connect(lambda checked=False: self.append_renderbox(amount=2))
+        
+        btn_nine = BtnIco(ico_path='resource/3x3-.png', title='9 X 9', h=40, w=40)
+        btn_nine.clicked.connect(lambda checked=False: self.append_renderbox(amount=3))
+        
+        btn_max = BtnIco(ico_path='resource/4x4-.png', title='4 X 4', h=40, w=40)
+        btn_max.clicked.connect(lambda checked=False: self.append_renderbox(amount=4))
+        
         btn_layout = QHBoxLayout()
         btn_layout.addStretch()
         btn_layout.addWidget(btn_one)

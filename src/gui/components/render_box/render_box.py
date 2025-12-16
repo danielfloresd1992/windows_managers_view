@@ -30,11 +30,11 @@ script_path = os.path.abspath(
 class Render_box(QFrame):
     
     
-    def __init__(self, frames_per_milliseconds=100):
+    def __init__(self, frames_per_milliseconds=100, index=0):
         super().__init__()
         self.open = True
         self.setAcceptDrops(True)
-        
+        self.index = index
         self.analytical_mode = False
         self.websocket = None
         self.process = None
@@ -51,13 +51,24 @@ class Render_box(QFrame):
         #self.bar_options.hide()  # Oculta al iniciar
         
 
-
+#border: 1px solid ;
 
     def setup_ui(self):
+        
         
         """__________🗳️CONTENEDOR PRINCIPAL🗳️___________"""
         self.setObjectName('box-content')
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.setContentsMargins(0, 0, 0, 0)
+        self.setStyleSheet("""
+            #object_render {
+                background-color: transparent;
+                padding: 0;
+            }
+        """)
+        
+        
+       
         self.stack = QVBoxLayout(self)   # renombrado para no chocar con QWidget.layout()
         self.stack.setContentsMargins(0, 0, 0, 0)
 
@@ -137,8 +148,6 @@ class Render_box(QFrame):
 
         
         
-    
-    
     # ---------------------------
     # Procesos de captura
     # ---------------------------
@@ -193,6 +202,7 @@ class Render_box(QFrame):
             print(self.process.processId())
 
 
+
     def detroy_loop(self):
         if self.process is not None:
             self.process.terminate()
@@ -227,11 +237,10 @@ class Render_box(QFrame):
     def loop_show_result(self):
         if not self.process:
             return
-
         # Leer todos los datos disponibles
         data = self.process.readAllStandardOutput().data().decode('utf-8', errors='ignore')
         lines = data.strip().split('\n')
-        
+    
         # Procesar las líneas en pares (header e imagen)
         i = 0
         while i < len(lines) - 1:

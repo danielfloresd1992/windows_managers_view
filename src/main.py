@@ -80,10 +80,10 @@ def main():
         dock.setTitleBarWidget(QWidget())
         windowsPrincipal.addDockWidget(Qt.LeftDockWidgetArea, dock)  # lo acoplas a la izquierda
     
-    
+        '''
         box = Render_box()
         windowsPrincipal.setCentralWidget(box)
-        
+        '''
         
         
         window_containter.show()
