@@ -74,6 +74,7 @@ class MainWindow(QMainWindow):
         """______PESTAÑAS______"""
         self.tabs = QTabWidget()
         self.tabs.setContentsMargins(0, 0, 0, 0)
+        self.tabs.setAttribute(Qt.WA_StyledBackground, True)
         self.tabs.setStyleSheet("""
             QTabBar::tab {
                 /* 1. Fondo */

@@ -35,7 +35,7 @@ class Render_box(QFrame):
         self.open = True
         self.setAcceptDrops(True)
         self.index = index
-        self.analytical_mode = False
+        self.smart_mode = False
         self.websocket = None
         self.process = None
         self.frames_per_milliseconds = frames_per_milliseconds
@@ -111,11 +111,24 @@ class Render_box(QFrame):
         self.bar_options.setAttribute(Qt.WA_StyledBackground, True)
         self.bar_options.setMaximumHeight(30)
         self.bar_options.setObjectName("bar_options")
+        
 
         bar_option_layout = QHBoxLayout(self.bar_options)
         bar_option_layout.setContentsMargins(10, 0, 10, 0)
         bar_option_layout.setSpacing(5)
 
+    
+        self.btn_smart = QPushButton('🤖')
+        self.btn_smart.setCursor(QCursor(Qt.PointingHandCursor))
+        self.btn_smart.setObjectName('btn-bar')
+        self.btn_smart.clicked.connect(self.activate_modesmart)
+        self.btn_smart.setCheckable(True)
+        self.btn_smart.setToolTip('Activación de modo smart')
+        
+        
+        self.btn_perimeterroi = QPushButton()
+        
+        
         self.btn_cap = QPushButton("📷")
         self.btn_cap.setCursor(QCursor(Qt.PointingHandCursor))
         self.btn_cap.setObjectName("btn-bar")
@@ -136,6 +149,7 @@ class Render_box(QFrame):
         btn_pause.clicked.connect(self.pause_loop)
         btn_stop.clicked.connect(self.detroy_loop)
 
+        bar_option_layout.addWidget(self.btn_smart)
         bar_option_layout.addStretch(1)
         bar_option_layout.addWidget(self.btn_cap)
         bar_option_layout.addWidget(btn_play)
@@ -201,6 +215,16 @@ class Render_box(QFrame):
             self.text_fps.setText("Tasa de FPS: 0")
             print(self.process.processId())
 
+
+
+
+    def activate_modesmart(self):
+        self.smart_mode = not self.smart_mode
+        if self.smart_mode:
+            self.btn_smart.setStyleSheet('background-color: #FF0000;')
+        else :
+            self.btn_smart.setStyleSheet('background-color: #BFBFBF;')
+        
 
 
     def detroy_loop(self):
@@ -286,14 +310,16 @@ class Render_box(QFrame):
                         'roi_coordinates': result_coordinates
                     }
                     
-                    if self.open == True:
-                        self.open = False
-                        self.websocket.sendTextMessage(json.dumps(data_to_Send))
-                        print('frame sent to websocket')
-                    else:
-                        print('websocket busy, frame skipped')
-                        
-                    #self.update_streaming_frame(image_base64, type_image='base64', tets=True)
+                    if self.smart_mode:
+                        if self.open == True:
+                            self.open = False
+                            self.websocket.sendTextMessage(json.dumps(data_to_Send))
+                            print('frame sent to websocket')
+                        else:
+                            print('websocket busy, frame skipped')
+                    else: 
+                        self.update_streaming_frame(image_base64, type_image='base64', tets=True)
+                    
                     
             except (json.JSONDecodeError, Exception) as e:
                 # Ignorar errores y continuar con el siguiente par
