@@ -145,45 +145,41 @@ class MainWindow(QMainWindow):
     
     
     def append_renderbox(self, amount: int = 2, add=False):
-    
-            
-        spaces_total = 12
-        amount_total = amount * amount
-            
+        
         amount_box = 0
         row = 0
+        print(amount)
+        print(self.list_box)
+        if add == False: self._clear_layout_only()
+                
         while row < amount:
             col = 0
             while col < amount:
-                    
-                if add:
-                    box_seleted = self.list_box[amount_box]
-                    self.content_box_layout.addWidget(box_seleted, row, col)
-               
-                else:
-                    box_seleted = self.list_box[amount_box]
-                    if amount_box  >= amount_total:
-                        self.content_box_layout.removeWidget(box_seleted)
-                    else:
-                        self.content_box_layout.removeWidget(box_seleted)
-                        self.content_box_layout.addWidget(box_seleted, row, col)
-                        box_seleted.show()
-                        
-                        
+                box_seleted = self.list_box[amount_box]
+                self.content_box_layout.addWidget(box_seleted, row, col)
+                box_seleted.show()
                 amount_box = amount_box + 1
                 col = col + 1
             row = row + 1
             
-        
-       
-        
-        
             
             
     def _create_list_box(self):
         while len(self.list_box) < 16:
             box = Render_box(index=len(self.list_box))
             self.list_box.append(box)
+        
+        
+        
+    def _clear_layout_only(self):
+        while self.content_box_layout.count():
+            item = self.content_box_layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                    # Lo ocultamos para que no se quede "flotando" en la esquina de la ventana
+                    widget.hide()
+                        # Opcional: desvincularlo totalmente del layout padre
+                    widget.setParent(None)
         
         
         
