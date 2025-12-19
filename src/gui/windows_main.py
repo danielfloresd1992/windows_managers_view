@@ -107,7 +107,7 @@ class MainWindow(QMainWindow):
         """__________VIEW_________"""
         content_box = QWidget()
         content_box.setObjectName('TabContent')
-      
+        content_box.setAttribute(Qt.WA_StyledBackground, True)
         self.content_box_layout = QGridLayout(content_box)
         self.content_box_layout.setSpacing(0)
         self.content_box_layout.setContentsMargins(0,0,0,0)

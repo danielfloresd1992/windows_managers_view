@@ -163,6 +163,9 @@ QWidget#Head {
     border-bottom: 1px solid #333333;
 }
 
+#TabContent{
+    background-color: #000000
+}
 
 
 #FooterBar {
