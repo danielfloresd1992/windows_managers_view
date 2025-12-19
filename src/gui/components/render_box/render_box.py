@@ -58,7 +58,8 @@ class Render_box(QFrame):
         
         """__________🗳️CONTENEDOR PRINCIPAL🗳️___________"""
         self.setObjectName('box-content')
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
+        
         self.setContentsMargins(0, 0, 0, 0)
         self.setStyleSheet("""
             #object_render {
