@@ -94,7 +94,7 @@ class MainWindow(QMainWindow):
                 font-size: 10pt;
             }
             QTabWidget {
-                background-color: transparent;
+                background-color: #000000;
                 border: 0;
                 padding: 0;
             }
