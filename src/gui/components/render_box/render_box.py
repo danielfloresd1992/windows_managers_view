@@ -54,12 +54,10 @@ class Render_box(QFrame):
 #border: 1px solid ;
 
     def setup_ui(self):
-        
-        
         """__________🗳️CONTENEDOR PRINCIPAL🗳️___________"""
         self.setObjectName('box-content')
         self.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
-        
+        self.setAttribute(Qt.WA_StyledBackground, True)
         self.setContentsMargins(0, 0, 0, 0)
         self.setStyleSheet("""
             #object_render {
@@ -68,8 +66,7 @@ class Render_box(QFrame):
             }
         """)
         
-        
-       
+        # El Layout principal ahora SOLO tendrá la imagen
         self.stack = QVBoxLayout(self)   # renombrado para no chocar con QWidget.layout()
         self.stack.setContentsMargins(0, 0, 0, 0)
 
@@ -77,7 +74,8 @@ class Render_box(QFrame):
        
 
         """__________📃BARRA DE INFORMACIÓN📃__________"""
-        self.bar_info = QWidget()
+        "inserción______⤵️_______"
+        self.bar_info = QWidget(self)
         self.bar_info.setAttribute(Qt.WA_StyledBackground, True)
         self.bar_info.setMaximumHeight(30)
         self.bar_info.setObjectName("bar_options")
@@ -90,9 +88,6 @@ class Render_box(QFrame):
         
         self.bar_info_layout.addWidget(self.text_fps)
         self.bar_info_layout.addWidget(self.text_size)
-
-        "inserción______⤵️_______"
-        self.stack.addWidget(self.bar_info) 
         
         
 
@@ -108,7 +103,8 @@ class Render_box(QFrame):
 
 
         """____________⏏️BARRA DE BOTONES🔘_____________"""
-        self.bar_options = QWidget()
+        "inserción______⤵️_______"
+        self.bar_options = QWidget(self)
         self.bar_options.setAttribute(Qt.WA_StyledBackground, True)
         self.bar_options.setMaximumHeight(30)
         self.bar_options.setObjectName("bar_options")
@@ -156,9 +152,9 @@ class Render_box(QFrame):
         bar_option_layout.addWidget(btn_play)
         bar_option_layout.addWidget(btn_pause)
         bar_option_layout.addWidget(btn_stop)
-        "inserción______⤵️_______"
-        self.stack.addWidget(self.bar_options)  
         
+        self.bar_info.hide()
+        self.bar_options.hide()
         
 
         
@@ -395,6 +391,37 @@ class Render_box(QFrame):
             
             
             
+    def resizeEvent(self, event):
+        """Actualiza la posición y ancho de las barras cuando el box cambia de tamaño"""
+        ancho = self.width()
+        alto = self.height()
+        
+        # Posicionar bar_info arriba (top: 0)
+        self.bar_info.setGeometry(0, 0, ancho, 30)
+        
+        # Posicionar bar_options abajo (bottom: 0)
+        alto_barra = self.bar_options.height()
+        self.bar_options.setGeometry(0, alto - alto_barra, ancho, alto_barra)
+        
+        super().resizeEvent(event)
+
+    def enterEvent(self, event):
+        """Muestra las barras al entrar el mouse"""
+        self.bar_info.show()
+        self.bar_options.show()
+        # Asegurarse que estén por encima de la imagen
+        self.bar_info.raise_()
+        self.bar_options.raise_()
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        """Oculta las barras al salir el mouse"""
+        self.bar_info.hide()
+        self.bar_options.hide()
+        super().leaveEvent(event)
+        
+        
+        
     def init_websocket(self):        
       
         self.websocket = QWebSocket()
