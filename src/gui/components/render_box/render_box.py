@@ -43,12 +43,13 @@ class Render_box(QFrame):
         self.last_fps_time = time.time()
         self.current_fps = 0
         
-        self.with_image = 0
-        self.height_image = 0
+        # 1. NOMBRES DE VARIABLES PROTEGIDOS (Evita usar width/height a secas)
+        self.image_w = 0 
+        self.image_h = 0
+        self.current_pixmap = None # Guardamos el frame actual para re-escalar
         
         self.setup_ui()
         hwndState.change_hwnd.connect(self.get_hwnd_and_print)
-        #self.bar_options.hide()  # Oculta al iniciar
         
 
 #border: 1px solid ;
@@ -83,7 +84,7 @@ class Render_box(QFrame):
 
         self.text_fps = QLabel(f"Tasa de FPS: {self.current_fps}")
         self.text_fps.setObjectName('text-fps')
-        self.text_size = QLabel(f'Tamaño del cuadro: {self.with_image}x{self.height_image}')
+        self.text_size = QLabel(f'Tamaño del cuadro: {0}x{0}')
         self.text_size.setObjectName('text-fps')
         
         self.bar_info_layout.addWidget(self.text_fps)
@@ -300,7 +301,7 @@ class Render_box(QFrame):
                 
                 if not self.websocket == None: 
                     image_base64 = base64.b64encode(image_bytes).decode()
-                    result_coordinates = self.imagen_label.get_coordinates(self.width, self.height)
+                    result_coordinates = self.imagen_label.get_coordinates(self.width(), self.height())
                     data_to_Send = {
                         'header': header,
                         'image' : image_base64,
@@ -329,32 +330,30 @@ class Render_box(QFrame):
         
     def update_streaming_frame(self, frame, type_image='base64', tets=False):
         try:
-            if tets == True: self.open = True
+            if tets: self.open = True
             pixmap = QPixmap()
-            map = False
+            
             if type_image == 'base64':
                 base64_str = re.sub(r'^data:image/\w+;base64,', '', frame)
                 frame_bytes = base64.b64decode(base64_str)
                 map = pixmap.loadFromData(frame_bytes, 'JPEG')
             else:
                 map = pixmap.loadFromData(frame, "PNG")
+
             if map:
-                if not hasattr(self, "cached_size") or self.cached_size != self.imagen_label.size():
-                    self.cached_size = self.imagen_label.size()
-                size = pixmap.size()
-                self.width = size.width()
-                self.height = size.height()
-                self.text_size.setText(f'Tamaño del cuadro: {self.width}x{self.height}')
-                pixmap_escalada = pixmap.scaled(
-                    self.cached_size,
+                self.current_pixmap = pixmap # Guardamos el original
+                self.image_w = pixmap.width()
+                self.image_h = pixmap.height()
+                self.text_size.setText(f'{self.image_w}x{self.image_h}')
+                
+                # Escalamos al tamaño ACTUAL del label
+                self.imagen_label.setPixmap(self.current_pixmap.scaled(
+                    self.imagen_label.size(),
                     Qt.IgnoreAspectRatio,
-                    Qt.SmoothTransformation,
-                )
-                self.imagen_label.setPixmap(pixmap_escalada)
-                
-                
+                    Qt.SmoothTransformation
+                ))
         except Exception as e:
-            print(f"💥 Error en update_streaming_frame: {e}")
+            print(f"💥 Error update frame: {e}")
 
             
         
@@ -392,18 +391,30 @@ class Render_box(QFrame):
             
             
     def resizeEvent(self, event):
-        """Actualiza la posición y ancho de las barras cuando el box cambia de tamaño"""
-        ancho = self.width()
-        alto = self.height()
-        
-        # Posicionar bar_info arriba (top: 0)
-        self.bar_info.setGeometry(0, 0, ancho, 30)
-        
-        # Posicionar bar_options abajo (bottom: 0)
-        alto_barra = self.bar_options.height()
-        self.bar_options.setGeometry(0, alto - alto_barra, ancho, alto_barra)
-        
+        """Este método ahora SI funcionará porque no borramos self.width()"""
         super().resizeEvent(event)
+        
+        # 1. Ajustar posición de las barras flotantes
+        w = self.width()
+        h = self.height()
+        
+        if hasattr(self, 'bar_info'):
+            self.bar_info.setGeometry(0, 0, w, 30)
+        
+        if hasattr(self, 'bar_options'):
+            h_bar = self.bar_options.height()
+            self.bar_options.setGeometry(0, h - h_bar, w, h_bar)
+
+        # 2. Re-escalar la imagen actual al nuevo tamaño si existe
+        if hasattr(self, 'current_pixmap') and self.current_pixmap:
+            self.imagen_label.setPixmap(self.current_pixmap.scaled(
+                self.imagen_label.size(),
+                Qt.IgnoreAspectRatio,
+                Qt.SmoothTransformation
+            ))
+        
+        
+
 
     def enterEvent(self, event):
         """Muestra las barras al entrar el mouse"""
@@ -413,6 +424,8 @@ class Render_box(QFrame):
         self.bar_info.raise_()
         self.bar_options.raise_()
         super().enterEvent(event)
+
+
 
     def leaveEvent(self, event):
         """Oculta las barras al salir el mouse"""

@@ -146,22 +146,23 @@ class MainWindow(QMainWindow):
     
     
     def append_renderbox(self, amount: int = 2, add=False):
-        
-        amount_box = 0
-        row = 0
-        print(amount)
-        print(self.list_box)
-        if add == False: self._clear_layout_only()
-                
-        while row < amount:
-            col = 0
-            while col < amount:
-                box_seleted = self.list_box[amount_box]
-                self.content_box_layout.addWidget(box_seleted, row, col)
-                box_seleted.show()
-                amount_box = amount_box + 1
-                col = col + 1
-            row = row + 1
+        try:
+            amount_box = 0
+            row = 0
+
+            if add == False: self._clear_layout_only()
+                    
+            while row < amount:
+                col = 0
+                while col < amount:
+                    box_seleted = self.list_box[amount_box]
+                    self.content_box_layout.addWidget(box_seleted, row, col)
+                    box_seleted.show()
+                    amount_box = amount_box + 1
+                    col = col + 1
+                row = row + 1
+        except Exception as e:
+            print(e)
             
             
             
