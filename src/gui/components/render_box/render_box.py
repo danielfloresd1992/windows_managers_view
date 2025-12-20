@@ -13,6 +13,7 @@ from PySide6.QtWebSockets import QWebSocket
 from PySide6.QtGui import QPixmap, QCursor
 
 from ..custon_label.interactive_imageLabel import interactive_imageLabel
+from ..custon_btn.btn_footer import BtnIco
 
 from core.state_global.hwnd import hwndState
 from core.capture_exaple import capture_window_by_hwnd, pil_image_to_png_bytes
@@ -116,7 +117,7 @@ class Render_box(QFrame):
         bar_option_layout.setSpacing(5)
 
     
-        self.btn_smart = QPushButton('🤖')
+        self.btn_smart = BtnIco(ico_path='resource/mode_ai.png', title='captura', h=30, w=30)
         self.btn_smart.setCursor(QCursor(Qt.PointingHandCursor))
         self.btn_smart.setObjectName('btn-bar')
         self.btn_smart.clicked.connect(self.activate_modesmart)
@@ -126,20 +127,19 @@ class Render_box(QFrame):
         
         self.btn_perimeterroi = QPushButton()
         
-        
-        self.btn_cap = QPushButton("📷")
+        self.btn_cap = BtnIco(ico_path='resource/camera_box.png', title='captura', h=30, w=30)
         self.btn_cap.setCursor(QCursor(Qt.PointingHandCursor))
         self.btn_cap.setObjectName("btn-bar")
 
-        btn_play = QPushButton("▶")
+        btn_play = BtnIco(ico_path='resource/play_box.png', title='Iniciar', h=30, w=30)
         btn_play.setCursor(QCursor(Qt.PointingHandCursor))
         btn_play.setObjectName("btn-bar")
 
-        btn_pause = QPushButton("||")
+        btn_pause = BtnIco(ico_path='resource/pause_box.png', title='Pausar', h=30, w=30)
         btn_pause.setCursor(QCursor(Qt.PointingHandCursor))
         btn_pause.setObjectName("btn-bar")
 
-        btn_stop = QPushButton("■")
+        btn_stop = BtnIco(ico_path='resource/stop_box.png', title='Parar', h=30, w=30)
         btn_stop.setCursor(QCursor(Qt.PointingHandCursor))
         btn_stop.setObjectName("btn-bar")
 

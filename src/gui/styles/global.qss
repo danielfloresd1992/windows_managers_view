@@ -126,16 +126,15 @@ ScrollAreaSidebar{
     min-height: 20px;
     max-width: 20px;
     max-height: 20px;
-    padding: 0px;
-    margin: 5px;
     font-size: 10px;
     font-weight: bold;
-    background-color: #00dddddd;
-    border: 1px solid #dadada;
     color: #ffffff;
+    background-color: #0000001e
 }
 
-
+#btn-bar:hover{
+    background-color: #424242dd;
+}
 
 
 QLabel{
