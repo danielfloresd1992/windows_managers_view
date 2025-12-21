@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
     QFrame, QWidget, QLabel, QHBoxLayout, QVBoxLayout, QGridLayout,
     QSizePolicy, QPushButton
 )
-from PySide6.QtCore import Qt, Slot, QProcess,  QUrl, QPoint,  QRect
+from PySide6.QtCore import Qt, Slot, QProcess,  QUrl, Signal
 from PySide6.QtWebSockets import QWebSocket
 from PySide6.QtGui import QPixmap, QCursor
 
@@ -31,6 +31,9 @@ script_path = os.path.abspath(
 class Render_box(QFrame):
     
     
+    double_clicked_signal = Signal(int)
+    
+    
     def __init__(self, frames_per_milliseconds=100, index=0):
         super().__init__()
         self.open = True
@@ -44,7 +47,7 @@ class Render_box(QFrame):
         self.frame_count = 0
         self.last_fps_time = time.time()
         self.current_fps = 0
-        
+        self.is_maximized = False
         # 1. NOMBRES DE VARIABLES PROTEGIDOS (Evita usar width/height a secas)
         self.image_w = 0 
         self.image_h = 0
@@ -379,6 +382,7 @@ class Render_box(QFrame):
 
 
 
+
     def dropEvent(self, event):
         try:
             if event.mimeData().hasFormat("application/x-boxcap"):
@@ -445,7 +449,14 @@ class Render_box(QFrame):
         self.bar_options.hide()
         super().leaveEvent(event)
         
-        
+    
+    def mouseDoubleClickEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.double_clicked_signal.emit(self.index)
+            super().mouseDoubleClickEvent(event)
+            
+    
+    
         
     def init_websocket(self):        
       

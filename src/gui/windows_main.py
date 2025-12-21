@@ -44,7 +44,7 @@ class MainWindow(QMainWindow):
         
         self._create_list_box()
         "inserción______⤵️_______"
-        self.append_renderbox(4, add=True)
+        self.prerender_renderbox(4, add=True)
 
 
     def setup_ui(self):
@@ -159,7 +159,7 @@ class MainWindow(QMainWindow):
         
     
     
-    def append_renderbox(self, amount: int = 2, add=False, callback=None):
+    def prerender_renderbox(self, amount: int = 2, add=False, callback=None):
         try:
             amount_box = 0
             row = 0
@@ -180,11 +180,18 @@ class MainWindow(QMainWindow):
         except Exception as e:
             print(e)
             
-            
+    
+    
+    def render_maxized_box(self, index_box):
+        print(index_box)
+    
+    
             
     def _create_list_box(self):
         while len(self.list_box) < 16:
             box = Render_box(index=len(self.list_box))
+            box.double_clicked_signal.connect(self.render_maxized_box)
+            box.is_maximized = not box.is_maximized
             self.list_box.append(box)
         
         
@@ -220,16 +227,16 @@ class MainWindow(QMainWindow):
         contain_layout.addWidget(title)
       
         btn_one = BtnIco(ico_path='resource/1-.png', title='Una ventana principal', h=40, w=40)
-        btn_one.clicked.connect(lambda checked=False: self.append_renderbox(amount=1, add=False, callback=close_dlg))
+        btn_one.clicked.connect(lambda checked=False: self.prerender_renderbox(amount=1, add=False, callback=close_dlg))
  
         btn_quad = BtnIco(ico_path='resource/2x2-.png', title='2 X 2', h=40, w=40)
-        btn_quad.clicked.connect(lambda checked=False: self.append_renderbox(amount=2, add=False, callback=close_dlg))
+        btn_quad.clicked.connect(lambda checked=False: self.prerender_renderbox(amount=2, add=False, callback=close_dlg))
         
         btn_nine = BtnIco(ico_path='resource/3x3-.png', title='9 X 9', h=40, w=40)
-        btn_nine.clicked.connect(lambda checked=False: self.append_renderbox(amount=3, add=False, callback=close_dlg))
+        btn_nine.clicked.connect(lambda checked=False: self.prerender_renderbox(amount=3, add=False, callback=close_dlg))
         
         btn_max = BtnIco(ico_path='resource/4x4-.png', title='4 X 4', h=40, w=40)
-        btn_max.clicked.connect(lambda checked=False: self.append_renderbox(amount=4, add=False, callback=close_dlg))
+        btn_max.clicked.connect(lambda checked=False: self.prerender_renderbox(amount=4, add=False, callback=close_dlg))
         
         btn_layout = QHBoxLayout()
         btn_layout.addStretch()
