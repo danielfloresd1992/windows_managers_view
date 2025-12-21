@@ -86,6 +86,11 @@ class MainWindow(QMainWindow):
                 border-top-left-radius: 4px; /* Esquinas superiores redondeadas */
                 border-top-right-radius: 4px;
                 
+                border-top: 1px solid #000000;
+                border-bottom: 1px solid #000000;
+                border-left: 1px solid #000000;
+                border-right: 1px solid #000000;
+                
                 /* 3. Espacio interno (Padding) */
                 padding: 8px 12px; /* Aumenta el alto y ancho de la pestaña */
                 
@@ -93,6 +98,15 @@ class MainWindow(QMainWindow):
                 color: #ffffff; /* Texto gris oscuro */
                 font-size: 10pt;
             }
+            
+            QTabBar::tab:selected{
+                border-bottom: 2px solid #00A8E8;
+            }
+            
+            QTabBar::tab:hover{
+                background: #363535;
+            }
+            
             QTabWidget {
                 background-color: #000000;
                 border: 0;
@@ -145,11 +159,10 @@ class MainWindow(QMainWindow):
         
     
     
-    def append_renderbox(self, amount: int = 2, add=False):
+    def append_renderbox(self, amount: int = 2, add=False, callback=None):
         try:
             amount_box = 0
             row = 0
-
             if add == False: self._clear_layout_only()
                     
             while row < amount:
@@ -161,6 +174,9 @@ class MainWindow(QMainWindow):
                     amount_box = amount_box + 1
                     col = col + 1
                 row = row + 1
+                
+                if callable(callback): callback()
+                    
         except Exception as e:
             print(e)
             
@@ -204,16 +220,16 @@ class MainWindow(QMainWindow):
         contain_layout.addWidget(title)
       
         btn_one = BtnIco(ico_path='resource/1-.png', title='Una ventana principal', h=40, w=40)
-        btn_one.clicked.connect(lambda checked=False: self.append_renderbox(amount=1))
+        btn_one.clicked.connect(lambda checked=False: self.append_renderbox(amount=1, add=False, callback=close_dlg))
  
         btn_quad = BtnIco(ico_path='resource/2x2-.png', title='2 X 2', h=40, w=40)
-        btn_quad.clicked.connect(lambda checked=False: self.append_renderbox(amount=2))
+        btn_quad.clicked.connect(lambda checked=False: self.append_renderbox(amount=2, add=False, callback=close_dlg))
         
         btn_nine = BtnIco(ico_path='resource/3x3-.png', title='9 X 9', h=40, w=40)
-        btn_nine.clicked.connect(lambda checked=False: self.append_renderbox(amount=3))
+        btn_nine.clicked.connect(lambda checked=False: self.append_renderbox(amount=3, add=False, callback=close_dlg))
         
         btn_max = BtnIco(ico_path='resource/4x4-.png', title='4 X 4', h=40, w=40)
-        btn_max.clicked.connect(lambda checked=False: self.append_renderbox(amount=4))
+        btn_max.clicked.connect(lambda checked=False: self.append_renderbox(amount=4, add=False, callback=close_dlg))
         
         btn_layout = QHBoxLayout()
         btn_layout.addStretch()

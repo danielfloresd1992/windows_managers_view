@@ -2,7 +2,7 @@ import sys
 import os
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QVBoxLayout, QWidget, QHBoxLayout, QPushButton, QLabel, QSizePolicy, QStatusBar
-from PySide6.QtGui import QMouseEvent
+from PySide6.QtGui import QMouseEvent, QIcon
 from dotenv import load_dotenv
 
 
@@ -43,19 +43,22 @@ class CustomTitleBar(QWidget):
         self.title.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
 
 
-        btn_minimize = QPushButton('_')
+        btn_minimize = QPushButton()
+        btn_minimize.setIcon(QIcon('resource/minimize.png')) 
         btn_minimize.setAttribute(Qt.WA_StyledBackground, True)
         btn_minimize.setFixedHeight(40)
         btn_minimize.setObjectName('MinimizeButton')
         btn_minimize.clicked.connect(self.parent().showMinimized)
 
 
-        btn_maximize = QPushButton('□')
+        btn_maximize = QPushButton()
+        btn_maximize.setIcon(QIcon('resource/maximize.png')) 
         btn_maximize.setFixedHeight(40)
         btn_maximize.setObjectName('MaximizeButton')
         btn_maximize.clicked.connect(self.toggle_maximize_restore)
         
-        btn_close = QPushButton('✕')
+        btn_close = QPushButton()
+        btn_close.setIcon(QIcon('resource/close.png')) 
         btn_close.setFixedHeight(40)
         btn_close.setObjectName('CloseButton')
         btn_close.clicked.connect(self.parent().close)

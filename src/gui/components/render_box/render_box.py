@@ -37,6 +37,7 @@ class Render_box(QFrame):
         self.setAcceptDrops(True)
         self.index = index
         self.smart_mode = False
+        self.activate_roi = False
         self.websocket = None
         self.process = None
         self.frames_per_milliseconds = frames_per_milliseconds
@@ -117,7 +118,7 @@ class Render_box(QFrame):
         bar_option_layout.setSpacing(5)
 
     
-        self.btn_smart = BtnIco(ico_path='resource/mode_ai.png', title='captura', h=30, w=30)
+        self.btn_smart = BtnIco(ico_path='resource/mode_ai.png', title='Activación de monitoreo inteligente', h=30, w=30)
         self.btn_smart.setCursor(QCursor(Qt.PointingHandCursor))
         self.btn_smart.setObjectName('btn-bar')
         self.btn_smart.clicked.connect(self.activate_modesmart)
@@ -125,11 +126,17 @@ class Render_box(QFrame):
         self.btn_smart.setToolTip('Activación de modo smart')
         
         
-        self.btn_perimeterroi = QPushButton()
+        self.btn_perimeterroi = BtnIco(ico_path='resource/perimeter.png', title='Activación de perímetro inteligente', h=30, w=30)
+        self.btn_perimeterroi.setCursor(QCursor(Qt.PointingHandCursor))
+        self.btn_perimeterroi.setCheckable(True)
+        self.btn_perimeterroi.setObjectName("btn-bar")
+        self.btn_perimeterroi.clicked.connect(self._hideandclear_roy)
+        
         
         self.btn_cap = BtnIco(ico_path='resource/camera_box.png', title='captura', h=30, w=30)
         self.btn_cap.setCursor(QCursor(Qt.PointingHandCursor))
         self.btn_cap.setObjectName("btn-bar")
+        
 
         btn_play = BtnIco(ico_path='resource/play_box.png', title='Iniciar', h=30, w=30)
         btn_play.setCursor(QCursor(Qt.PointingHandCursor))
@@ -148,6 +155,7 @@ class Render_box(QFrame):
         btn_stop.clicked.connect(self.detroy_loop)
 
         bar_option_layout.addWidget(self.btn_smart)
+        bar_option_layout.addWidget(self.btn_perimeterroi)
         bar_option_layout.addStretch(1)
         bar_option_layout.addWidget(self.btn_cap)
         bar_option_layout.addWidget(btn_play)
@@ -157,7 +165,11 @@ class Render_box(QFrame):
         self.bar_info.hide()
         self.bar_options.hide()
         
-
+    
+    def _hideandclear_roy(self):
+        self.imagen_label.toggle_points()
+        self.activate_roi = not self.activate_roi
+        
         
         
     # ---------------------------

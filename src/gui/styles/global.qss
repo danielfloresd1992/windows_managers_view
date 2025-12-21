@@ -133,7 +133,7 @@ ScrollAreaSidebar{
 }
 
 #btn-bar:hover{
-    background-color: #424242dd;
+    background-color: #2e2e2edd;
 }
 
 
