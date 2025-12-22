@@ -316,7 +316,7 @@ class Render_box(QFrame):
                 
                 if not self.websocket == None: 
                     image_base64 = base64.b64encode(image_bytes).decode()
-                    result_coordinates = self.imagen_label.get_coordinates(self.width(), self.height())
+                    result_coordinates = self.imagen_label.get_coordinates(self.image_w, self.image_h)
                     data_to_Send = {
                         'header': header,
                         'image' : image_base64,
