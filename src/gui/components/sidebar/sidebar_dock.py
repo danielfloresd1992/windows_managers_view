@@ -89,9 +89,6 @@ class Sidebar_Dock(QWidget):
         layout_dock.addWidget(toolbox)
         
         
-       
-    
-    
 
     
     def print_list(self, list_windows):
@@ -104,4 +101,30 @@ class Sidebar_Dock(QWidget):
 
 
 
+    def add_new_window(self, hwnd, title):
+        new_window = {
+            'hwnd': hwnd,
+            'title': title
+        }
+        box_cap = Box_cap(new_window)
+        self.content_layaut.addWidget(box_cap)
 
+
+
+
+    def remove_closed_windows(self, hwnd):
+        for i in range(self.content_layaut.count()):
+            layout_item = self.content_layaut.itemAt(i)
+            widget = layout_item.widget()
+            print(widget)
+            if hwnd == widget.id_windows:
+      
+                # 1. Quitarlo del layout
+                self.content_layaut.removeWidget(widget)
+                # 2. Desvincularlo visualmente
+                widget.setParent(None)
+                # 3. Marcarlo para eliminación de memoria (C++)
+                widget.deleteLater()
+                print(f"Widget with HWND {hwnd} deleted in layout.")
+                # Salimos del bucle una vez encontrado y eliminado
+                break

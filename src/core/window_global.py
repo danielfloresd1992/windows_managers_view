@@ -106,8 +106,6 @@ class Windows_monitor(QObject):
         if hwnd in self._ignore_hwnds:
             return
             
-
-
         print(f'Ventana abierta: {hwnd} - {title} ')
         """Slot llamado cuando una ventana se abre (desde el thread)."""
         if hwnd not in self._current_windows:

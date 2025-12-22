@@ -6,12 +6,10 @@ from PIL import Image
 
 ### MODELS AND DATA
 from model.windows.list_windows import open_windows_windows
+from core.window_global import windows_monitor
 
 
 ###    CONTROLLER AND LOGIC
-from core.capture_exaple import capture_window_by_hwnd
-from core.run_controller import check_admin_privileges
-from core.window_controller import activate_window, set_window_always_on_top, lock_window_position, send_text_to_window
 from core.app_singleton import  AppSingleton
 
 
@@ -19,7 +17,7 @@ from core.app_singleton import  AppSingleton
 ##from gui.components.modal_msm import ModalDialog
 ##from gui.windows_main import MainWindow
 
-from PySide6.QtGui import QPixmap
+
 from PySide6.QtWidgets import QGridLayout, QHBoxLayout, QVBoxLayout, QWidget, QDockWidget, QTextEdit
 from PySide6.QtCore import Qt
 
@@ -60,6 +58,11 @@ def main():
         
         asidebar = Sidebar_Dock(parent=None, title='Visión', src_ico='src/resources/ico.png')
         asidebar.print_list(list_windows)
+        
+        
+        windows_monitor.window_opened.connect(asidebar.add_new_window)
+        windows_monitor.window_closed.connect(asidebar.remove_closed_windows)
+        
         
         dock = QDockWidget(None)
         dock.setWidget(asidebar)
