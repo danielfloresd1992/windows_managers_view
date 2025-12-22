@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
     QFrame, QWidget, QLabel, QHBoxLayout, QVBoxLayout, QGridLayout,
     QSizePolicy, QPushButton
 )
-from PySide6.QtCore import Qt, Slot, QProcess,  QUrl, Signal
+from PySide6.QtCore import Qt, Slot, QProcess,  QUrl, Signal, QEvent
 from PySide6.QtWebSockets import QWebSocket
 from PySide6.QtGui import QPixmap, QCursor
 
@@ -31,7 +31,7 @@ script_path = os.path.abspath(
 class Render_box(QFrame):
     
     
-    double_clicked_signal = Signal(int)
+    double_clicked_signal = Signal(int, bool)
     
     
     def __init__(self, frames_per_milliseconds=100, index=0):
@@ -450,10 +450,13 @@ class Render_box(QFrame):
         super().leaveEvent(event)
         
     
-    def mouseDoubleClickEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self.double_clicked_signal.emit(self.index)
-            super().mouseDoubleClickEvent(event)
+    
+    def eventFilter(self, watchend, event):
+        if event.type() == QEvent.MouseButtonDblClick:
+            if event.button() == Qt.LeftButton:
+                self.is_maximized = not self.is_maximized
+                self.double_clicked_signal.emit(self.index, self.is_maximized)
+        return super().eventFilter(watchend, event)
             
     
     

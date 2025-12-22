@@ -15,7 +15,6 @@ class MainWindow(QMainWindow):
     MARGIN = 16  # margen sensible para detectar bordes
 
 
-
     def __init__(self):
         super().__init__()
         self.setObjectName('MainWindowStyle')
@@ -182,16 +181,20 @@ class MainWindow(QMainWindow):
             
     
     
-    def render_maxized_box(self, index_box):
-        print(index_box)
     
-    
+    def render_maxized_box(self, index_box, maximized):
+        for i in range(self.content_box_layout.count()):
+            if maximized: 
+                if index_box != i: self.list_box[i].hide()
+                continue
+            self.list_box[i].show()
+  
+  
             
     def _create_list_box(self):
         while len(self.list_box) < 16:
             box = Render_box(index=len(self.list_box))
             box.double_clicked_signal.connect(self.render_maxized_box)
-            box.is_maximized = not box.is_maximized
             self.list_box.append(box)
         
         

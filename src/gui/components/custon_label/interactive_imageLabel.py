@@ -109,13 +109,13 @@ class interactive_imageLabel(QLabel):
 
         painter.end()
 
+
     # ------------------------------------------------------------
     # EVENTOS DEL MOUSE
     # ------------------------------------------------------------
     def mousePressEvent(self, event: QMouseEvent):
         if not self.show_points:
             return
-
         if event.button() == Qt.LeftButton:
             for i, p_percentage in enumerate(self.points):
                 p_pixel = self.get_scaled_point(p_percentage)
@@ -128,33 +128,33 @@ class interactive_imageLabel(QLabel):
                     self.active_point_index = i
                     self.update()
                     return
-
         super().mousePressEvent(event)
+
+
 
     def mouseMoveEvent(self, event: QMouseEvent):
         if not self.show_points:
             return
-
         if self.active_point_index != -1 and event.buttons() & Qt.LeftButton:
             new_pos_pixel = event.pos()
             new_pos_pixel.setX(max(0, min(new_pos_pixel.x(), self.width())))
             new_pos_pixel.setY(max(0, min(new_pos_pixel.y(), self.height())))
-
             new_pos_percentage = self.get_percentage_point(new_pos_pixel)
             self.points[self.active_point_index] = new_pos_percentage
             self.update()
-
         super().mouseMoveEvent(event)
+
+
 
     def mouseReleaseEvent(self, event: QMouseEvent):
         if not self.show_points:
             return
-
         if event.button() == Qt.LeftButton and self.active_point_index != -1:
             self.active_point_index = -1
             self.update()
-
         super().mouseReleaseEvent(event)
+
+
 
     # ------------------------------------------------------------
     # OBTENER COORDENADAS EN PIXELES ORIGINALES
