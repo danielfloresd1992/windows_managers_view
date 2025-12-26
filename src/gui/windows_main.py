@@ -6,7 +6,7 @@ from PySide6.QtGui import QCursor, QIcon
 from gui.components.title_bar.window_bar import CustomTitleBar
 from gui.components.custon_btn.btn_footer import BtnIco
 from gui.components.render_box.render_box import  Render_box
-
+from gui.components.custom_status_bar import CustomStatusBar
 
 
 
@@ -15,7 +15,7 @@ class MainWindow(QMainWindow):
     MARGIN = 16  # margen sensible para detectar bordes
 
 
-    def __init__(self):
+    def __init__(self, socket_service):
         super().__init__()
         self.setObjectName('MainWindowStyle')
         self.setAttribute(Qt.WA_StyledBackground, True)
@@ -28,9 +28,9 @@ class MainWindow(QMainWindow):
         self._start_geom = None
         
         self.list_box = []
-        
-            
+        self.socket = socket_service
 
+    
         self.setup_ui()
         self.center_windows()
 
@@ -136,25 +136,20 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(content_box, 'Dispositivos')
         
         
-        
         """____BARRA DE OPCIONES___"""
-        status = QStatusBar()
-        status.setAttribute(Qt.WA_StyledBackground, True)
-        status.setFixedHeight(35)
-        status.setObjectName('FooterBar')
+        footer_bar = CustomStatusBar()
+        footer_bar.btn_layout.clicked.connect(self.open_dialog)
         
-        status.showMessage('Servidor Activo')
+        self.socket.connected_signal.connect(footer_bar.update_ui)
+        self.socket.disconnected_signal.connect(footer_bar.update_ui)
+        self.socket.re_connect_signal.connect(footer_bar.receive_message)
         
-        status.setStyleSheet("QStatusBar { background-color: #424242; color: white; }")
+        footer_bar.setStyleSheet("QStatusBar { background-color: #424242; color: white; }")
         "inserción______⤵️_______"
-        self.window_child.setStatusBar(status)
+        self.window_child.setStatusBar(footer_bar)
         
 
-        btn = BtnIco(ico_path='resource/layout.png', title='Divisiones de ventanas: (3x3, 2x2, etc.)')
-        btn.clicked.connect(self.open_dialog)
-        "inserción______⤵️_______"
-        status.addPermanentWidget(btn)
-        
+    
         
     
     

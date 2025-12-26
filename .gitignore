@@ -1,6 +1,7 @@
 venv/
 src/native/build
 src/gui/__pycache__
+src/gui/__pycache__/
 .env
 compilate.bat
 dist/

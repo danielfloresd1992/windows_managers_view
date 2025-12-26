@@ -6,8 +6,9 @@ import time
 
 from PySide6.QtWidgets import (
     QFrame, QWidget, QLabel, QHBoxLayout, QVBoxLayout, QGridLayout,
-    QSizePolicy, QPushButton
+    QSizePolicy
 )
+
 from PySide6.QtCore import Qt, Slot, QProcess,  QUrl, Signal, QEvent
 from PySide6.QtWebSockets import QWebSocket
 from PySide6.QtGui import QPixmap, QCursor

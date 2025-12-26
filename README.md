@@ -2,7 +2,13 @@ window_manager/
 ├── main.py                     # Punto de entrada y inicialización de la app.
 |
 ├── core/                       # Lógica de negocio (Controladores, lógica de captura).
-│   ├── ...
+│   ├── network/
+│   │   
+|   │_init__.py
+│   │   │  
+│   │   ├── socket_client.py    # Maneja la conexión continua (WebSockets/Socket.io)
+│   │   └── api_client.py
+│   │   
 │   └── window_controller.py
 |
 ├── native/                     # Funciones C++ y Pybind11 para tareas nativas.

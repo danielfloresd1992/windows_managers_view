@@ -27,6 +27,10 @@ from gui.components.render_box.render_box import Render_box
 from gui.components.sidebar.sidebar_dock import Sidebar_Dock
 
 
+## rest ann straming
+
+from core.network.socket_client import Socket_services
+
         
 
 def load_stylesheet():
@@ -45,13 +49,19 @@ def load_stylesheet():
 def main():
     try:
         list_windows = open_windows_windows()
+        
+       
+        
         app = AppSingleton.initialize(sys.argv)
         app.setStyleSheet(load_stylesheet())
         
+        socket_client = Socket_services()
+        
+    
         splashScreen = SplashScreen()
         splashScreen.show()
 
-        window_containter = MainWindow()
+        window_containter = MainWindow(socket_service=socket_client)
         windowsPrincipal = window_containter.window_child 
     
         
@@ -90,6 +100,7 @@ def main():
         
         
         window_containter.show()
+        socket_client.conect_server(url='ws://72.68.60.171:9000/ws')
         splashScreen.finish(windowsPrincipal)
 
         return app.exec()
