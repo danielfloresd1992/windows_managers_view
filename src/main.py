@@ -100,7 +100,8 @@ def main():
         
         
         window_containter.show()
-        socket_client.conect_server(url='ws://72.68.60.171:9000/ws')
+        
+        
         splashScreen.finish(windowsPrincipal)
 
         return app.exec()

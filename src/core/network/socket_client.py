@@ -3,6 +3,7 @@ from PySide6.QtCore import QObject, Signal, QUrl, QTimer, Slot
 from PySide6.QtNetwork import QAbstractSocket
 
 
+
 class Socket_services(QObject):
     
   
@@ -34,7 +35,7 @@ class Socket_services(QObject):
         print('✅ WebSocket connected sucessfull')
         self.connected_signal.emit(True, 'Server connect') # Notifica a la UI
         
-        if self.reconnect_timer:
+        if  hasattr(self, 'reconnect_timer'):
             self.reconnect_timer.stop()
             self.reconnect_timer.deleteLater()
             

@@ -21,6 +21,9 @@ class MainWindow(QMainWindow):
         self.setAttribute(Qt.WA_StyledBackground, True)
         self.setWindowFlag(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         self.setContentsMargins(0,0,0,0)
+        self.setup_ui()
+        self.center_windows()
+        
         # variables internas para resize
         self._resizing = False
         self._resize_direction = None
@@ -29,10 +32,12 @@ class MainWindow(QMainWindow):
         
         self.list_box = []
         self.socket = socket_service
-
+        
+        self.socket.connected_signal.connect(self.footer_bar.update_ui)
+        self.socket.disconnected_signal.connect(self.footer_bar.update_ui)
+        self.socket.re_connect_signal.connect(self.footer_bar.receive_message)
     
-        self.setup_ui()
-        self.center_windows()
+        
 
         # 🔑 activar mouse tracking en toda la jerarquía
         self.setMouseTracking(True)
@@ -137,20 +142,19 @@ class MainWindow(QMainWindow):
         
         
         """____BARRA DE OPCIONES___"""
-        footer_bar = CustomStatusBar()
-        footer_bar.btn_layout.clicked.connect(self.open_dialog)
+        self.footer_bar = CustomStatusBar()
+        self.footer_bar.btn_layout.clicked.connect(self.open_dialog)
+        self.footer_bar.inference_type_selected.connect(self.socket_init)
         
-        self.socket.connected_signal.connect(footer_bar.update_ui)
-        self.socket.disconnected_signal.connect(footer_bar.update_ui)
-        self.socket.re_connect_signal.connect(footer_bar.receive_message)
         
-        footer_bar.setStyleSheet("QStatusBar { background-color: #424242; color: white; }")
+        
+        self.footer_bar.setStyleSheet("QStatusBar { background-color: #424242; color: white; }")
         "inserción______⤵️_______"
-        self.window_child.setStatusBar(footer_bar)
+        self.window_child.setStatusBar(self.footer_bar)
         
 
-    
-        
+    def socket_init(self, parameter):
+        self.socket.conect_server(url=f'ws://72.68.60.171:9000/ws/{parameter}')
     
     
     def prerender_renderbox(self, amount: int = 2, add=False, callback=None):
@@ -190,6 +194,7 @@ class MainWindow(QMainWindow):
         while len(self.list_box) < 16:
             box = Render_box(index=len(self.list_box))
             box.double_clicked_signal.connect(self.render_maxized_box)
+         
             self.list_box.append(box)
         
         

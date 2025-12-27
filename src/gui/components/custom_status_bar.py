@@ -1,10 +1,12 @@
-from PySide6.QtWidgets import QStatusBar, QLabel, QWidget, QHBoxLayout
-from PySide6.QtCore import Slot, Qt
+from PySide6.QtWidgets import QStatusBar, QLabel, QWidget, QHBoxLayout, QComboBox
+from PySide6.QtCore import Slot, Qt, Signal
 
 from .custon_btn.btn_footer import BtnIco
 
 
 class CustomStatusBar(QStatusBar):
+    
+    inference_type_selected = Signal(str)
     
     def __init__(self):
         super().__init__(parent=None)
@@ -27,13 +29,20 @@ class CustomStatusBar(QStatusBar):
         
         
         """____Indicador del server___"""
-        self.msg_label = QLabel('Esperando conexión...')
+        self.msg_label = QLabel('Selecione el tipo de inferencia --->')
         self.indicator = QLabel('●')
         self.indicator.setStyleSheet('color: gray;')
         "inserción______⤵️_______"
         self.container_layout.addWidget(self.indicator)
         self.container_layout.addWidget(self.msg_label)
-        self.container_layout.addStretch(5)
+        self.container_layout.addStretch()
+        
+        self.layout_selector = QComboBox()
+        self.layout_selector.addItems(['Seleccione...', 'Lavado', 'Perimetrales', 'Personal de Amazonas'])
+        self.layout_selector.currentTextChanged.connect(self._on_selector_changed)
+        "inserción______⤵️_______"
+        self.container_layout.addWidget(QLabel("Tipos de inferencias:")) # Etiqueta opcional
+        self.container_layout.addWidget(self.layout_selector)
         
         
         """____Boton para selección de render_BOX___"""
@@ -41,6 +50,12 @@ class CustomStatusBar(QStatusBar):
         "inserción______⤵️_______"
         self.container_layout.addWidget(self.btn_layout)
     
+    
+    def _on_selector_changed(self, text):
+        if text != 'Seleccione...':
+            self.inference_type_selected.emit(text)
+            self.layout_selector.setDisabled(True)
+        
     
     
     @Slot(bool, str)
@@ -51,12 +66,13 @@ class CustomStatusBar(QStatusBar):
             self.showMessage('Conexión establecida con el servidor', 3000)
             self.indicator.setStyleSheet('color: #4eff2b; font-weight: bold;')
             self.msg_label.setStyleSheet('color: #4eff2b; font-weight: bold;')
-            self.msg_label.setText(message)
+            self.layout_selector.setEnabled(False)
         else:
             self.showMessage('Conexión perdida con el servidor', 3000)
             self.indicator.setStyleSheet('color: #8B0000; font-weight: bold;')
             self.msg_label.setStyleSheet('color: white; font-weight: bold;')
-            self.msg_label.setText(message)
+            self.layout_selector.setEnabled(True)
+        self.msg_label.setText(message)
        
     
     @Slot(str)

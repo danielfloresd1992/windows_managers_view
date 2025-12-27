@@ -1,7 +1,7 @@
 import os, json, base64, sys
 import re
 import time
-
+import uuid
 
 
 from PySide6.QtWidgets import (
@@ -35,14 +35,14 @@ class Render_box(QFrame):
     double_clicked_signal = Signal(int, bool)
     
     
-    def __init__(self, frames_per_milliseconds=100, index=0):
+    def __init__(self, frames_per_milliseconds=100, index=0, socket_services = None):
         super().__init__()
         self.open = True
         self.setAcceptDrops(True)
         self.index = index
         self.smart_mode = False
         self.activate_roi = False
-        self.websocket = None
+        self.socket = socket_services
         self.process = None
         self.frames_per_milliseconds = frames_per_milliseconds
         self.frame_count = 0
@@ -53,7 +53,7 @@ class Render_box(QFrame):
         self.image_w = 0 
         self.image_h = 0
         self.current_pixmap = None # Guardamos el frame actual para re-escalar
-        
+        self.component_key = str(uuid.uuid4())
         self.setup_ui()
         hwndState.change_hwnd.connect(self.get_hwnd_and_print)
         
@@ -278,11 +278,9 @@ class Render_box(QFrame):
         # Leer todos los datos disponibles
         data = self.process.readAllStandardOutput().data().decode('utf-8', errors='ignore')
         lines = data.strip().split('\n')
-    
         # Procesar las líneas en pares (header e imagen)
         i = 0
         while i < len(lines) - 1:
-
 
             line1 = lines[i].strip()
             line2 = lines[i+1].strip()
@@ -302,9 +300,8 @@ class Render_box(QFrame):
                 if not isinstance(header, dict) or 'timestamp' not in header:
                     i += 2
                     continue
-                    
+                
                 image_bytes = base64.b64decode(line2)
-              
                 # Cálculo de FPS
                 self.frame_count += 1
                 now = time.time()
@@ -313,9 +310,8 @@ class Render_box(QFrame):
                     self.frame_count = 0
                     self.last_fps_time = now
                     self.text_fps.setText(f'Tasa de FPS: {self.current_fps}')
-                    
                 
-                if not self.websocket == None: 
+                if not self.socket == None: 
                     image_base64 = base64.b64encode(image_bytes).decode()
                     result_coordinates = self.imagen_label.get_coordinates(self.image_w, self.image_h)
                     data_to_Send = {
@@ -327,13 +323,12 @@ class Render_box(QFrame):
                     if self.smart_mode:
                         if self.open == True:
                             self.open = False
-                            self.websocket.sendTextMessage(json.dumps(data_to_Send))
+                            self.socket.sendTextMessage(json.dumps(data_to_Send))
                             print('frame sent to websocket')
                         else:
                             print('websocket busy, frame skipped')
                     else: 
                         self.update_streaming_frame(image_base64, type_image='base64', tets=True)
-                    
                     
             except (json.JSONDecodeError, Exception) as e:
                 # Ignorar errores y continuar con el siguiente par
@@ -399,7 +394,7 @@ class Render_box(QFrame):
                 self.title = other_title
                 event.acceptProposedAction()
                 
-                if self.websocket is None: self.init_websocket()
+                ##if self.websocket is None: self.init_websocket() DEPRECATED
             else:
                 event.ignore()
         except Exception as e:
@@ -463,15 +458,15 @@ class Render_box(QFrame):
     
         
     def init_websocket(self):        
-      
-        self.websocket = QWebSocket()
+        pass
+        self.socket = QWebSocket()
         # 2. Conectar señales del QWebSocket a slots de la clase
-        self.websocket.connected.connect(self.on_connected)
-        self.websocket.textMessageReceived.connect(self.on_text_message_received)
+        self.socket.connected.connect(self.on_connected)
+        self.socket.textMessageReceived.connect(self.on_text_message_received)
 
         # 3. Intentar abrir la conexión
         websocket_url = QUrl('ws://72.68.60.171:9000/ws')  # Cambia a tu URL de servidor
-        self.websocket.open(websocket_url)
+        self.socket.open(websocket_url)
         
         
         
@@ -507,4 +502,4 @@ class Render_box(QFrame):
         
         
     def close_socket(self):
-        self.websocket.close()
+        self.socket.close()
