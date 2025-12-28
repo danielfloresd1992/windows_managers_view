@@ -43,6 +43,7 @@ class Render_box(QFrame):
         self.smart_mode = False
         self.activate_roi = False
         self.socket = socket_services
+        
         self.process = None
         self.frames_per_milliseconds = frames_per_milliseconds
         self.frame_count = 0
@@ -57,8 +58,9 @@ class Render_box(QFrame):
         self.setup_ui()
         hwndState.change_hwnd.connect(self.get_hwnd_and_print)
         
+        if self.socket is not None: self.socket.signal_inference.connect(self.on_text_message_received)
+        
 
-#border: 1px solid ;
 
     def setup_ui(self):
         """__________🗳️CONTENEDOR PRINCIPAL🗳️___________"""
@@ -280,6 +282,9 @@ class Render_box(QFrame):
         lines = data.strip().split('\n')
         # Procesar las líneas en pares (header e imagen)
         i = 0
+        
+      
+        
         while i < len(lines) - 1:
 
             line1 = lines[i].strip()
@@ -314,22 +319,27 @@ class Render_box(QFrame):
                 if not self.socket == None: 
                     image_base64 = base64.b64encode(image_bytes).decode()
                     result_coordinates = self.imagen_label.get_coordinates(self.image_w, self.image_h)
-                    data_to_Send = {
-                        'header': header,
-                        'image' : image_base64,
-                        'roi_coordinates': result_coordinates
-                    }
+                    
+                    data = {
+                            'header': header,
+                            'image' : image_base64,
+                            'roi_coordinates': result_coordinates,
+                            'roi_activate' : self.activate_roi
+                        }
+                  
                     
                     if self.smart_mode:
                         if self.open == True:
                             self.open = False
-                            self.socket.sendTextMessage(json.dumps(data_to_Send))
+                            print(self.socket)
+                            self.socket.send_frame(self.component_key ,data)
+                            
                             print('frame sent to websocket')
                         else:
                             print('websocket busy, frame skipped')
                     else: 
                         self.update_streaming_frame(image_base64, type_image='base64', tets=True)
-                    
+
             except (json.JSONDecodeError, Exception) as e:
                 # Ignorar errores y continuar con el siguiente par
                 self.open = True
@@ -343,7 +353,6 @@ class Render_box(QFrame):
         try:
             if tets: self.open = True
             pixmap = QPixmap()
-            
             if type_image == 'base64':
                 base64_str = re.sub(r'^data:image/\w+;base64,', '', frame)
                 frame_bytes = base64.b64decode(base64_str)
@@ -477,21 +486,27 @@ class Render_box(QFrame):
        
       
 
-    @Slot(str)
+    @Slot(dict)
     def on_text_message_received(self, message):
         """Manejador llamado cuando se recibe un mensaje de texto."""
         try:
-            data = json.loads(message)
+            if message['component_key'] != self.component_key: return
+            
+            data = message['data']
+            
             if data['status'] == 'success':
                 processed_image = data['processed_image']
                 self.update_streaming_frame(processed_image, type_image='base64', tets=False)
             if data['status'] == 'error':
                 raise Exception(data.get('message', 'Error desconocido del servidor'))
+     
+     
         except Exception as e:
             print(f"💥 Error al procesar mensaje WebSocket: {e}")
         finally:
             self.open = True
 
+       
        
         
     
@@ -499,6 +514,7 @@ class Render_box(QFrame):
     def on_disconnected(self):
         """Manejador llamado cuando la conexión WebSocket se cierra."""
         print("Conexión WebSocket cerrada.")
+        
         
         
     def close_socket(self):

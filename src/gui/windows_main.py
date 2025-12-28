@@ -152,9 +152,13 @@ class MainWindow(QMainWindow):
         "inserción______⤵️_______"
         self.window_child.setStatusBar(self.footer_bar)
         
+        
 
     def socket_init(self, parameter):
-        self.socket.conect_server(url=f'ws://72.68.60.171:9000/ws/{parameter}')
+        self.socket.url = 'ws://72.68.60.171:9000/ws'
+        self.socket.type_inference = parameter
+        self.socket.conect_server()
+    
     
     
     def prerender_renderbox(self, amount: int = 2, add=False, callback=None):
@@ -192,9 +196,9 @@ class MainWindow(QMainWindow):
             
     def _create_list_box(self):
         while len(self.list_box) < 16:
-            box = Render_box(index=len(self.list_box))
+            box = Render_box(index=len(self.list_box), socket_services=self.socket)
             box.double_clicked_signal.connect(self.render_maxized_box)
-         
+            
             self.list_box.append(box)
         
         
