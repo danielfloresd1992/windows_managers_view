@@ -2,6 +2,7 @@ from PySide6.QtWidgets import QStatusBar, QLabel, QWidget, QHBoxLayout, QComboBo
 from PySide6.QtCore import Slot, Qt, Signal
 
 from .custon_btn.btn_footer import BtnIco
+from .custon_btn.btn_footer import BtnIco
 
 
 class CustomStatusBar(QStatusBar):
@@ -23,6 +24,7 @@ class CustomStatusBar(QStatusBar):
         
         container = QWidget()
         self.container_layout = QHBoxLayout(container)
+        self.container_layout.setSpacing(20)
         self.container_layout.setContentsMargins(0,0,0,0)
         "inserción______⤵️_______"
         self.addPermanentWidget(container)
@@ -44,11 +46,15 @@ class CustomStatusBar(QStatusBar):
         self.container_layout.addWidget(QLabel("Tipos de inferencias:")) # Etiqueta opcional
         self.container_layout.addWidget(self.layout_selector)
         
+        self.btn_stopconection = BtnIco(ico_path='resource/finish_connection.png', title='Cerrar conexión con el servidor', h=25, w=25)
+        "inserción______⤵️_______"
+        self.container_layout.addWidget(self.btn_stopconection)
         
         """____Boton para selección de render_BOX___"""
         self.btn_layout = BtnIco(ico_path='resource/layout.png', title='Divisiones de ventanas: (3x3, 2x2, etc.)')
         "inserción______⤵️_______"
         self.container_layout.addWidget(self.btn_layout)
+    
     
     
     def _on_selector_changed(self, text):

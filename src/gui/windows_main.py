@@ -15,7 +15,7 @@ class MainWindow(QMainWindow):
     MARGIN = 16  # margen sensible para detectar bordes
 
 
-    def __init__(self, socket_service):
+    def __init__(self, socket_service, amount_renderbox=2, data_box=None):
         super().__init__()
         self.setObjectName('MainWindowStyle')
         self.setAttribute(Qt.WA_StyledBackground, True)
@@ -31,6 +31,8 @@ class MainWindow(QMainWindow):
         self._start_geom = None
         
         self.list_box = []
+        self.amount_renderbox = amount_renderbox
+        
         self.socket = socket_service
         
         self.socket.connected_signal.connect(self.footer_bar.update_ui)
@@ -45,10 +47,12 @@ class MainWindow(QMainWindow):
         for child in self.findChildren(QWidget):
             child.setMouseTracking(True)
 
+        self.create_list_box()
         
-        self._create_list_box()
+        
         "inserción______⤵️_______"
-        self.prerender_renderbox(4, add=True)
+        self.prerender_renderbox(self.amount_renderbox, add=True)
+
 
 
     def setup_ui(self):
@@ -145,9 +149,7 @@ class MainWindow(QMainWindow):
         self.footer_bar = CustomStatusBar()
         self.footer_bar.btn_layout.clicked.connect(self.open_dialog)
         self.footer_bar.inference_type_selected.connect(self.socket_init)
-        
-        
-        
+        self.footer_bar.btn_stopconection.clicked.connect(self.socket_close)
         self.footer_bar.setStyleSheet("QStatusBar { background-color: #424242; color: white; }")
         "inserción______⤵️_______"
         self.window_child.setStatusBar(self.footer_bar)
@@ -159,14 +161,15 @@ class MainWindow(QMainWindow):
         self.socket.type_inference = parameter
         self.socket.conect_server()
     
+    def socket_close(self):
+        self.socket.disconnect_server()
     
     
-    def prerender_renderbox(self, amount: int = 2, add=False, callback=None):
+    def prerender_renderbox(self, amount: int = 2, add=False, callback=None, data=None):
         try:
             amount_box = 0
             row = 0
             if add == False: self._clear_layout_only()
-                    
             while row < amount:
                 col = 0
                 while col < amount:
@@ -193,13 +196,17 @@ class MainWindow(QMainWindow):
             self.list_box[i].show()
   
   
+  
             
-    def _create_list_box(self):
-        while len(self.list_box) < 16:
+    def create_list_box(self, data=None):
+        for i in range(16):
+            
+            if data != None and data[i]['index'] == i:
+                print(data[i])
             box = Render_box(index=len(self.list_box), socket_services=self.socket)
             box.double_clicked_signal.connect(self.render_maxized_box)
-            
             self.list_box.append(box)
+        
         
         
         

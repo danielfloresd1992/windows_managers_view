@@ -1,10 +1,14 @@
 from PySide6.QtWidgets import QLabel
-from PySide6.QtCore import Qt, QPoint
+from PySide6.QtCore import Qt, QPoint, Signal
 from PySide6.QtGui import QPixmap, QMouseEvent, QPainter, QBrush, QPen
 
 
 class interactive_imageLabel(QLabel):
-    def __init__(self, parent=None):
+    
+    point_change = Signal(list)
+    
+    
+    def __init__(self, parent=None, roi=[]):
         super().__init__(parent)
         self.setMouseTracking(True)
 
@@ -146,12 +150,15 @@ class interactive_imageLabel(QLabel):
 
 
 
+
     def mouseReleaseEvent(self, event: QMouseEvent):
         if not self.show_points:
             return
         if event.button() == Qt.LeftButton and self.active_point_index != -1:
             self.active_point_index = -1
             self.update()
+            self.point_change.emit(self.qpoints_to_list(self.points))
+            
         super().mouseReleaseEvent(event)
 
 
@@ -170,3 +177,14 @@ class interactive_imageLabel(QLabel):
             coordinates.append([x, y])
 
         return coordinates
+
+
+    def qpoints_to_list(qpoints: list[QPoint]) -> list[list[int]]:
+        """Convierte una lista de QPoints a una lista de listas [[x, y], ...]"""
+        return [[p.x(), p.y()] for p in qpoints]
+
+
+    def list_to_qpoints(data: list[list[int]]) -> list[QPoint]:
+        """Convierte una lista de listas [[x, y], ...] a una lista de QPoints"""
+        # Usamos una lista de comprensión para instanciar los QPoints
+        return [QPoint(coord[0], coord[1]) for coord in data]

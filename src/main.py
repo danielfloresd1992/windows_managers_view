@@ -25,7 +25,7 @@ from gui.windows_main import MainWindow
 from gui.components.SplashScreen import SplashScreen
 from gui.components.render_box.render_box import Render_box
 from gui.components.sidebar.sidebar_dock import Sidebar_Dock
-
+from model.settings_model import SettingsModel
 
 ## rest ann straming
 
@@ -48,6 +48,10 @@ def load_stylesheet():
 
 def main():
     try:
+        settingsModel = SettingsModel()
+    #   settingsModel.update_box_config(10, 'arr', [[]])
+
+        print(f'cantidad de box: {settingsModel.get("amount_renderbox")}')
         list_windows = open_windows_windows()
         
        
@@ -61,7 +65,12 @@ def main():
         splashScreen = SplashScreen()
         splashScreen.show()
 
-        window_containter = MainWindow(socket_service=socket_client)
+        window_containter = MainWindow(
+            socket_service=socket_client,
+            amount_renderbox = settingsModel.get('amount_renderbox'),
+            data_box = settingsModel.get('boxs_config')
+        )
+        
         windowsPrincipal = window_containter.window_child 
     
         
@@ -93,11 +102,7 @@ def main():
         dock.setTitleBarWidget(QWidget())
         windowsPrincipal.addDockWidget(Qt.LeftDockWidgetArea, dock)  # lo acoplas a la izquierda
     
-        '''
-        box = Render_box()
-        windowsPrincipal.setCentralWidget(box)
-        '''
-        
+     
         
         window_containter.show()
         
@@ -105,7 +110,7 @@ def main():
         splashScreen.finish(windowsPrincipal)
 
         return app.exec()
-    
+
     except Exception as e:
         print(f'Fatal crash: {e}')
         import traceback

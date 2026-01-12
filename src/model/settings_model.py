@@ -2,16 +2,32 @@ import json
 import os
 from pathlib import Path
 from appdirs import user_config_dir
+from cryptography.fernet import Fernet
 
 
 
 class SettingsModel:
     
-    def __init__(self, app_name='windows_managers_view', filename='config.json'): 
+    def __init__(self, app_name='windows_managers_view', filename='config.json', keyfile='cfghwrpoñm,.}ht4780sSDCWAG.key'): 
+
+        config_dir = user_config_dir(app_name)
+        print(config_dir)
+        self.key_path = os.path.join(config_dir, keyfile)
+        
+        if os.path.exists(self.key_path): 
+            with open(self.key_path, 'rb') as f: 
+                self.key = f.read() 
+        else: self.key = Fernet.generate_key() 
+        with open(self.key_path, 'wb') as f: 
+            f.write(self.key)
+        
+        
+        self.f = Fernet(self.key)
+        
         project_root = os.path.dirname(os.path.abspath(__file__))
         project_root = os.path.abspath(os.path.join(project_root, ".."))
         
-        config_dir = user_config_dir(app_name)
+        
         os.makedirs(config_dir, exist_ok=True)
         
         self.file_path = os.path.join(config_dir, filename)
@@ -26,7 +42,9 @@ class SettingsModel:
         if os.path.exists(self.file_path): 
             try:
                 with open(self.file_path, 'r', encoding='utf-8') as file: 
-                    self.data = json.load(file) 
+                    token = file.read()
+                    decryted = self.f.decrypt(token)
+                    self.data = json.loads(decryted.decode('utf-8'))
                     print('Archivo de configuración creado 📄')
             except json.JSONDecodeError: # Si el archivo está vacío o corrupto, regenerar 
                 self.data = self.default_config() 
@@ -39,14 +57,23 @@ class SettingsModel:
                 
                 
                 
-    def save_config(self): 
-        with open(self.file_path, 'w', encoding='utf-8') as file: 
-            json.dump(self.data, file, indent=4)
+    def save_config(self):
+        json_str = json.dumps(self.data, indent=4)
+        token = self.f.encrypt(json_str.encode('utf-8'))
+        with open(self.file_path, 'wb') as file: 
+            file.write(token)
+            
                 
                 
                 
     def default_config(self): 
-        return { 'last_inference': 'default', 'boxs_config': [{'index': i} for i in range(16)] }
+        return { 
+            'last_inference': 'default', 
+            'boxs_config': [
+                    {'index': i, 'roi': [[100,200],[900,100],[900,900],[100,900]], 'activate_roi': False} for i in range(16)
+            ],
+            'amount_renderbox': 2
+        }
     
     
     
@@ -75,6 +102,7 @@ class SettingsModel:
         new_box = {'index': index, key: value} 
         self.data['boxs_config'].append(new_box) 
         self.save_config()
+        
         
         
     def get_box_config(self, index):

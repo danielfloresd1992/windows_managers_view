@@ -33,9 +33,9 @@ class Render_box(QFrame):
     
     
     double_clicked_signal = Signal(int, bool)
+        
     
-    
-    def __init__(self, frames_per_milliseconds=100, index=0, socket_services = None):
+    def __init__(self, frames_per_milliseconds=100, index=0, roi = [[100,100],[900,100],[900,900],[100,900]],socket_services = None):
         super().__init__()
         self.open = True
         self.setAcceptDrops(True)
@@ -43,7 +43,7 @@ class Render_box(QFrame):
         self.smart_mode = False
         self.activate_roi = False
         self.socket = socket_services
-        
+        self.roi = roi
         self.process = None
         self.frames_per_milliseconds = frames_per_milliseconds
         self.frame_count = 0
@@ -56,6 +56,7 @@ class Render_box(QFrame):
         self.current_pixmap = None # Guardamos el frame actual para re-escalar
         self.component_key = str(uuid.uuid4())
         self.setup_ui()
+        
         hwndState.change_hwnd.connect(self.get_hwnd_and_print)
         
         if self.socket is not None: self.socket.signal_inference.connect(self.on_text_message_received)
@@ -99,16 +100,15 @@ class Render_box(QFrame):
         self.bar_info_layout.addWidget(self.text_size)
         
         
-
-
         """__________🖼️CONTENEDOR DE IMAGEN🖼️__________"""
         self.imagen_label = interactive_imageLabel('viewing window')
+        #self.imagen_label.self.points = self.imagen_label.list_to_qpoints(self.roi)
+        
+        self.imagen_label.point_change.connect(self.save_point)
         self.imagen_label.setAlignment(Qt.AlignCenter)
-    
-        self.imagen_label.installEventFilter(self)
+        self.imagen_label.installEventFilter(self) 
         "inserción______⤵️_______"
         self.stack.addWidget(self.imagen_label) 
-
 
 
         """____________⏏️BARRA DE BOTONES🔘_____________"""
@@ -411,6 +411,7 @@ class Render_box(QFrame):
             
             
             
+            
     def resizeEvent(self, event):
         """Este método ahora SI funcionará porque no borramos self.width()"""
         super().resizeEvent(event)
@@ -519,3 +520,8 @@ class Render_box(QFrame):
         
     def close_socket(self):
         self.socket.close()
+        
+        
+        
+    def save_point(self, list_point):
+        print(list_point)

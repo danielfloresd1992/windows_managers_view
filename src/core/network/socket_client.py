@@ -21,6 +21,7 @@ class Socket_services(QObject):
         # 2. Ahora super().__init__() funcionará correctamente
         super().__init__()
         self.url = url
+        self._manual_stop = False
         self.type_inference = type_inference
         self.client = QWebSocket()
         self.client.connected.connect(self._on_connected)
@@ -30,12 +31,54 @@ class Socket_services(QObject):
 
         
       
-    def conect_server(self):
+    def conect_server(self, new_url=None, new_type=None):
+        """Método para conectar o re-conectar"""
+        # 1. Si enviamos nuevos parámetros, los actualizamos
+        if new_url: self.url = new_url
+        if new_type: self.type_inference = new_type
+        
+        # 2. Resetear la bandera de stop manual
+        self._manual_stop = False
+        
+        # 3. Si ya está conectado, lo cerramos primero para limpiar
+        if self.client.state() == QAbstractSocket.ConnectedState:
+            self.client.close()
+            
+        print(f"🌐 Conectando a: {self.url}/{self.type_inference}")
         self.client.open(QUrl(f'{self.url}/{self.type_inference}'))
         
     
     
     
+    def disconnect_server(self):
+        """Método para desconexión intencional (limpia todo)"""
+        print("🛑 Desconexión manual solicitada")
+        self._manual_stop = True # Bloquea el bucle de reconexión
+        
+        # Detener timer si existe
+        if hasattr(self, 'reconnect_timer') and self.reconnect_timer.isActive():
+            self.reconnect_timer.stop()
+            
+        self.client.close()
+        # Limpiamos datos sensibles o temporales
+        self.id_connection = None
+        
+    
+    
+    
+    def _on_disconnected(self):
+        print('❌ WebSocket offline')
+        self.disconnected_signal.emit(False, "Server Offline")
+        
+        # SOLO reconecta si NO fue una desconexión manual
+        if not self._manual_stop:
+            self._loop_conection()
+        else:
+            print("INFO: No se iniciará reconexión automática (Stop manual).")
+            
+            
+            
+        
     def _on_connected(self):
         print(f"Conneted to server")
         print('✅ WebSocket connected sucessfull')
@@ -44,14 +87,6 @@ class Socket_services(QObject):
         if  hasattr(self, 'reconnect_timer'):
             self.reconnect_timer.stop()
             self.reconnect_timer.deleteLater()
-            
-            
-            
-        
-    def _on_disconnected(self):
-        print('❌ WebSocket offline')
-        self._loop_conection()
-        self.disconnected_signal.emit(False, "Server Offline")
         
         
         
@@ -111,4 +146,7 @@ class Socket_services(QObject):
             
             if data['event'] == 'conection_init': self.id_connection = data['id_connection']
 
-            elif data['event'] == 'inference': self.signal_inference.emit(data)
+            elif data['event'] == 'inference': 
+                print(data)
+                self.signal_inference.emit(data)
+            
