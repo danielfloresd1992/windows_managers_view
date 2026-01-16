@@ -33,17 +33,28 @@ class Render_box(QFrame):
     
     
     double_clicked_signal = Signal(int, bool)
-        
+    roi_change_signal = Signal(list)
     
-    def __init__(self, frames_per_milliseconds=100, index=0, roi = [[100,100],[900,100],[900,900],[100,900]],socket_services = None):
+    def __init__(self, 
+                frames_per_milliseconds=100, 
+                index=0, 
+                roi = [[100,100],[900,100],[900,900],[100,900]] ,
+                activate_roi=False, 
+                callback_save_roi = None,
+                socket_services = None
+                ):
         super().__init__()
         self.open = True
         self.setAcceptDrops(True)
         self.index = index
-        self.smart_mode = False
-        self.activate_roi = False
+        
         self.socket = socket_services
+        self.socket.connected_signal.connect(self.reconnect_socket)
         self.roi = roi
+        self.activate_roi = activate_roi
+        self.callback_save_roi = callback_save_roi
+        
+        self.smart_mode = False
         self.process = None
         self.frames_per_milliseconds = frames_per_milliseconds
         self.frame_count = 0
@@ -55,6 +66,7 @@ class Render_box(QFrame):
         self.image_h = 0
         self.current_pixmap = None # Guardamos el frame actual para re-escalar
         self.component_key = str(uuid.uuid4())
+        
         self.setup_ui()
         
         hwndState.change_hwnd.connect(self.get_hwnd_and_print)
@@ -101,7 +113,7 @@ class Render_box(QFrame):
         
         
         """__________🖼️CONTENEDOR DE IMAGEN🖼️__________"""
-        self.imagen_label = interactive_imageLabel('viewing window')
+        self.imagen_label = interactive_imageLabel('viewing window', roi=self.roi)
         #self.imagen_label.self.points = self.imagen_label.list_to_qpoints(self.roi)
         
         self.imagen_label.point_change.connect(self.save_point)
@@ -178,6 +190,10 @@ class Render_box(QFrame):
         
         
         
+    def reconnect_socket(self, data):
+        print('conexión establecida')
+        self.open = data
+        
     # ---------------------------
     # Procesos de captura
     # ---------------------------
@@ -185,7 +201,7 @@ class Render_box(QFrame):
         try:
            
             print(f"🔄 Iniciando loop para hwnd: {self.hwnd}")
-            if hasattr(self.process, 'canReadLine') :print(self.process.canReadLine())
+            #if hasattr(self.process, 'canReadLine') :print(self.process.canReadLine())
             if self.hwnd is None:
                 print("❌ No hay hwnd definido")
                 return
@@ -284,27 +300,26 @@ class Render_box(QFrame):
         i = 0
         
       
-        
-        while i < len(lines) - 1:
+        if i < len(lines) - 1:
+     
 
             line1 = lines[i].strip()
             line2 = lines[i+1].strip()
             # Si la primera línea está vacía, saltar
             if not line1:
                 i += 1
-                continue
-                
+                return
             # Verificar que no son mensajes de error
             if line1.startswith(('qt.', 'Traceback', 'File "', 'UnicodeEncodeError')):
                 i += 1
-                continue
+                return
                 
             try:
                 header = json.loads(line1)
                 # Verificar que tiene la estructura esperada
                 if not isinstance(header, dict) or 'timestamp' not in header:
                     i += 2
-                    continue
+                    return
                 
                 image_bytes = base64.b64decode(line2)
                 # Cálculo de FPS
@@ -329,14 +344,12 @@ class Render_box(QFrame):
                   
                     
                     if self.smart_mode:
-                        if self.open == True:
-                            self.open = False
-                            print(self.socket)
-                            self.socket.send_frame(self.component_key ,data)
+                        
+                        self.open = False
+                        self.socket.send_frame(self.component_key ,data)
                             
-                            print('frame sent to websocket')
-                        else:
-                            print('websocket busy, frame skipped')
+                        print('frame sent to websocket')
+                        
                     else: 
                         self.update_streaming_frame(image_base64, type_image='base64', tets=True)
 
@@ -374,6 +387,8 @@ class Render_box(QFrame):
                 ))
         except Exception as e:
             print(f"💥 Error update frame: {e}")
+        finally:
+            self.loop_show_result()
 
             
         
@@ -496,6 +511,11 @@ class Render_box(QFrame):
             data = message['data']
             
             if data['status'] == 'success':
+                
+                
+                for key in data:
+                    print(key)
+                    
                 processed_image = data['processed_image']
                 self.update_streaming_frame(processed_image, type_image='base64', tets=False)
             if data['status'] == 'error':
@@ -524,4 +544,6 @@ class Render_box(QFrame):
         
         
     def save_point(self, list_point):
-        print(list_point)
+        if self.callback_save_roi is not None:
+            self.callback_save_roi(index=self.index, list_point=list_point, activate_roi=self.activate_roi)
+       

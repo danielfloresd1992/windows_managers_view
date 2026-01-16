@@ -95,6 +95,7 @@ class Socket_services(QObject):
         # El signal de error de Qt suele enviar información técnica
         error_msg = self.client.errorString()
         print(f"💥 Error socket: {error_msg}")
+       
         self.disconnected_signal.emit(False, f"Error: {error_msg}")
         
         
@@ -131,7 +132,6 @@ class Socket_services(QObject):
 
             self.client.sendTextMessage(json.dumps(data_to_send))
         except Exception as e:
-
             print(e)
     
     
@@ -141,12 +141,11 @@ class Socket_services(QObject):
     def on_text_message_received(self, message):
     
         data = json.loads(message)
-
         if data.get('event') is not None:
             
             if data['event'] == 'conection_init': self.id_connection = data['id_connection']
 
             elif data['event'] == 'inference': 
-                print(data)
+                print(data['component_key'])
                 self.signal_inference.emit(data)
             

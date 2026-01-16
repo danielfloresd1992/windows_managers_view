@@ -16,12 +16,7 @@ class interactive_imageLabel(QLabel):
         self.show_points = True
 
         # Puntos iniciales (0–1000)
-        self.points = [
-            QPoint(100, 100),
-            QPoint(900, 100),
-            QPoint(900, 900),
-            QPoint(100, 900),
-        ]
+        self.points = self.list_to_qpoints(roi)
 
         self.active_point_index = -1
         self.point_radius = 10
@@ -157,7 +152,7 @@ class interactive_imageLabel(QLabel):
         if event.button() == Qt.LeftButton and self.active_point_index != -1:
             self.active_point_index = -1
             self.update()
-            self.point_change.emit(self.qpoints_to_list(self.points))
+            self.point_change.emit(self.qpoints_to_list(qpoints = self.points))
             
         super().mouseReleaseEvent(event)
 
@@ -179,12 +174,12 @@ class interactive_imageLabel(QLabel):
         return coordinates
 
 
-    def qpoints_to_list(qpoints: list[QPoint]) -> list[list[int]]:
+    def qpoints_to_list(self, qpoints: list[QPoint]) -> list[list[int]]:
         """Convierte una lista de QPoints a una lista de listas [[x, y], ...]"""
         return [[p.x(), p.y()] for p in qpoints]
 
 
-    def list_to_qpoints(data: list[list[int]]) -> list[QPoint]:
+    def list_to_qpoints(self, data: list[list[int]]) -> list[QPoint]:
         """Convierte una lista de listas [[x, y], ...] a una lista de QPoints"""
         # Usamos una lista de comprensión para instanciar los QPoints
         return [QPoint(coord[0], coord[1]) for coord in data]

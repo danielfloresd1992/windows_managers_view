@@ -54,7 +54,6 @@ def main():
         print(f'cantidad de box: {settingsModel.get("amount_renderbox")}')
         list_windows = open_windows_windows()
         
-       
         
         app = AppSingleton.initialize(sys.argv)
         app.setStyleSheet(load_stylesheet())
@@ -67,8 +66,7 @@ def main():
 
         window_containter = MainWindow(
             socket_service=socket_client,
-            amount_renderbox = settingsModel.get('amount_renderbox'),
-            data_box = settingsModel.get('boxs_config')
+            data_model_gui = settingsModel
         )
         
         windowsPrincipal = window_containter.window_child 
@@ -110,6 +108,7 @@ def main():
         splashScreen.finish(windowsPrincipal)
 
         return app.exec()
+
 
     except Exception as e:
         print(f'Fatal crash: {e}')

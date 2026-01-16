@@ -14,13 +14,14 @@ class SettingsModel:
         print(config_dir)
         self.key_path = os.path.join(config_dir, keyfile)
         
+        os.makedirs(os.path.dirname(self.key_path), exist_ok=True)
+        
         if os.path.exists(self.key_path): 
             with open(self.key_path, 'rb') as f: 
                 self.key = f.read() 
-        else: self.key = Fernet.generate_key() 
-        with open(self.key_path, 'wb') as f: 
-            f.write(self.key)
-        
+        else: 
+            self.key = Fernet.generate_key() 
+            with open(self.key_path, 'wb') as f: f.write(self.key)
         
         self.f = Fernet(self.key)
         
@@ -91,7 +92,7 @@ class SettingsModel:
     def update_box_config(self, index, key, value):
         """ Actualiza o añade una propiedad dentro de un diccionario de boxs_config. """ 
         for box in self.data['boxs_config']: 
-            print(index)
+
             print(box['index'])
             if box['index'] == index:
                 print(box)

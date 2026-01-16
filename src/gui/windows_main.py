@@ -15,7 +15,7 @@ class MainWindow(QMainWindow):
     MARGIN = 16  # margen sensible para detectar bordes
 
 
-    def __init__(self, socket_service, amount_renderbox=2, data_box=None):
+    def __init__(self, socket_service, data_model_gui = None, amount_renderbox=2, data_box=None):
         super().__init__()
         self.setObjectName('MainWindowStyle')
         self.setAttribute(Qt.WA_StyledBackground, True)
@@ -31,8 +31,12 @@ class MainWindow(QMainWindow):
         self._start_geom = None
         
         self.list_box = []
-        self.amount_renderbox = amount_renderbox
-        
+        self.amount_renderbox = data_model_gui.get('amount_renderbox')
+        self.data_model_gui = data_model_gui
+        '''
+         amount_renderbox = settingsModel.get('amount_renderbox'),
+            data_box = settingsModel.get('boxs_config')
+        '''
         self.socket = socket_service
         
         self.socket.connected_signal.connect(self.footer_bar.update_ui)
@@ -161,6 +165,7 @@ class MainWindow(QMainWindow):
         self.socket.type_inference = parameter
         self.socket.conect_server()
     
+    
     def socket_close(self):
         self.socket.disconnect_server()
     
@@ -184,6 +189,9 @@ class MainWindow(QMainWindow):
                     
         except Exception as e:
             print(e)
+        finally:
+            if self.data_model_gui is not None and hasattr(self.data_model_gui, 'set'):
+                self.data_model_gui.set('amount_renderbox', amount)
             
     
     
@@ -203,10 +211,26 @@ class MainWindow(QMainWindow):
             
             if data != None and data[i]['index'] == i:
                 print(data[i])
-            box = Render_box(index=len(self.list_box), socket_services=self.socket)
+            
+            print(self.data_model_gui.get('boxs_config')[i])
+            
+            box_config = self.data_model_gui.get_box_config(i)
+         
+            activate_roi = box_config['activate_roi']
+            roi = box_config['roi']
+            
+            box = Render_box(index=len(self.list_box), socket_services=self.socket, roi=roi, activate_roi=activate_roi, callback_save_roi=self._save_data_render_box)
+            
             box.double_clicked_signal.connect(self.render_maxized_box)
             self.list_box.append(box)
         
+        
+    def _save_data_render_box(self, index, list_point, activate_roi):
+
+        if self.data_model_gui is not None and hasattr(self.data_model_gui, 'update_box_config'):
+            self.data_model_gui.update_box_config(index, 'roi', list_point)
+            self.data_model_gui.update_box_config(index, 'activate_roi', activate_roi)
+            self.data_model_gui.get_box_config(index)
         
         
         
