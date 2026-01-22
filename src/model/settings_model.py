@@ -73,7 +73,8 @@ class SettingsModel:
             'boxs_config': [
                     {'index': i, 'roi': [[100,200],[900,100],[900,900],[100,900]], 'activate_roi': False} for i in range(16)
             ],
-            'amount_renderbox': 2
+            'amount_renderbox': 2,
+            'devices': []
         }
     
     
@@ -110,5 +111,33 @@ class SettingsModel:
         for box in self.data['boxs_config']:
             if box['index'] == index:
                return box
+
+    def add_device(self, name, ip, http_port, rtsp_port, user, password):
+        device = {
+            'name': name,
+            'ip': ip,
+            'http_port': http_port,
+            'rtsp_port': rtsp_port,
+            'user': user,
+            'password': password,
+            'connected': False
+        }
+        self.data['devices'].append(device)
+        self.save_config()
+
+
+    def get_devices(self):
+        return self.data.get('devices', [])
+
+
+    def update_device_connection(self, index, connected):
+        if 0 <= index < len(self.data['devices']):
+            self.data['devices'][index]['connected'] = connected
+            self.save_config()
+
+    def remove_device(self, index):
+        if 0 <= index < len(self.data['devices']):
+            self.data['devices'].pop(index)
+            self.save_config()
 
         

@@ -7,6 +7,7 @@ from gui.components.title_bar.window_bar import CustomTitleBar
 from gui.components.custon_btn.btn_footer import BtnIco
 from gui.components.render_box.render_box import  Render_box
 from gui.components.custom_status_bar import CustomStatusBar
+from gui.components.device_list import DeviceListWidget
 
 
 
@@ -21,7 +22,7 @@ class MainWindow(QMainWindow):
         self.setAttribute(Qt.WA_StyledBackground, True)
         self.setWindowFlag(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         self.setContentsMargins(0,0,0,0)
-        self.setup_ui()
+        
         self.center_windows()
         
         # variables internas para resize
@@ -37,11 +38,13 @@ class MainWindow(QMainWindow):
          amount_renderbox = settingsModel.get('amount_renderbox'),
             data_box = settingsModel.get('boxs_config')
         '''
+        self.setup_ui()
         self.socket = socket_service
         
         self.socket.connected_signal.connect(self.footer_bar.update_ui)
         self.socket.disconnected_signal.connect(self.footer_bar.update_ui)
         self.socket.re_connect_signal.connect(self.footer_bar.receive_message)
+    
     
         
 
@@ -145,6 +148,9 @@ class MainWindow(QMainWindow):
         
         """PESTAÑA DE DISPOSITIVOS"""
         content_box = QWidget()
+        device_list_widget = DeviceListWidget(self.data_model_gui)
+        layout_devices = QVBoxLayout(content_box)
+        layout_devices.addWidget(device_list_widget)
         "inserción______⤵️_______"
         self.tabs.addTab(content_box, 'Dispositivos')
         

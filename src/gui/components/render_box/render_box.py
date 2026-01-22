@@ -44,18 +44,21 @@ class Render_box(QFrame):
                 socket_services = None
                 ):
         super().__init__()
-        self.open = True
+
         self.setAcceptDrops(True)
         self.index = index
         
         self.socket = socket_services
         self.socket.connected_signal.connect(self.reconnect_socket)
+        self.socket.disconnected_signal.connect(self.diconect_socket) 
+        
         self.roi = roi
         self.activate_roi = activate_roi
         self.callback_save_roi = callback_save_roi
         
         self.smart_mode = False
         self.process = None
+        self.stop = False
         self.frames_per_milliseconds = frames_per_milliseconds
         self.frame_count = 0
         self.last_fps_time = time.time()
@@ -141,6 +144,7 @@ class Render_box(QFrame):
         self.btn_smart.setObjectName('btn-bar')
         self.btn_smart.clicked.connect(self.activate_modesmart)
         self.btn_smart.setCheckable(True)
+        self.btn_smart.setDisabled(True)
         self.btn_smart.setToolTip('Activación de modo smart')
         
         
@@ -191,8 +195,12 @@ class Render_box(QFrame):
         
         
     def reconnect_socket(self, data):
-        print('conexión establecida')
-        self.open = data
+        self.btn_smart.setEnabled(True)
+        
+        
+    def diconect_socket(self, data):
+        self.btn_smart.setEnabled(False)
+    
         
     # ---------------------------
     # Procesos de captura
@@ -260,14 +268,27 @@ class Render_box(QFrame):
 
 
     def detroy_loop(self):
+        self.btn_smart.setChecked(False)
+        
+        self.stop = True
+        self.smart_mode = False
+        
         if self.process is not None:
+            self.activate_modesmart()
+            ''' FUNCIÓN POR TERMINAR  '''
+            
             self.process.terminate()
-            if not self.process.waitForFinished(3000):
+            if not self.process.waitForFinished(1000):
                 self.process.kill()
             self.process = None
-            self.imagen_label.clear()
-            self.imagen_label.setText("viewing window")
-            self.close_socket()
+        
+        self.title = None
+        self.hwnd = None
+        self.imagen_label.setPixmap(QPixmap())
+        self.imagen_label.clear()
+        self.imagen_label.setText("viewing window")
+        #self.close_socket()
+        
 
 
 
@@ -298,11 +319,9 @@ class Render_box(QFrame):
         lines = data.strip().split('\n')
         # Procesar las líneas en pares (header e imagen)
         i = 0
-        
       
         if i < len(lines) - 1:
      
-
             line1 = lines[i].strip()
             line2 = lines[i+1].strip()
             # Si la primera línea está vacía, saltar
@@ -341,13 +360,9 @@ class Render_box(QFrame):
                             'roi_coordinates': result_coordinates,
                             'roi_activate' : self.activate_roi
                         }
-                  
                     
                     if self.smart_mode:
-                        
-                        self.open = False
                         self.socket.send_frame(self.component_key ,data)
-                            
                         print('frame sent to websocket')
                         
                     else: 
@@ -355,7 +370,6 @@ class Render_box(QFrame):
 
             except (json.JSONDecodeError, Exception) as e:
                 # Ignorar errores y continuar con el siguiente par
-                self.open = True
                 print(f"💥 Error procesando líneas: {e}")
             i += 2
             
@@ -388,8 +402,9 @@ class Render_box(QFrame):
         except Exception as e:
             print(f"💥 Error update frame: {e}")
         finally:
-            self.loop_show_result()
-
+            if self.stop == True: 
+                print('Recurción finalizada')
+            elif self.stop == False: self.loop_show_result()
             
         
 
@@ -506,30 +521,27 @@ class Render_box(QFrame):
     def on_text_message_received(self, message):
         """Manejador llamado cuando se recibe un mensaje de texto."""
         try:
+            print(message['component_key'])
+            
             if message['component_key'] != self.component_key: return
             
             data = message['data']
             
             if data['status'] == 'success':
                 
-                
                 for key in data:
                     print(key)
                     
                 processed_image = data['processed_image']
-                self.update_streaming_frame(processed_image, type_image='base64', tets=False)
+                self.update_streaming_frame(processed_image, type_image='base64', tets=False)                
             if data['status'] == 'error':
                 raise Exception(data.get('message', 'Error desconocido del servidor'))
      
-     
         except Exception as e:
             print(f"💥 Error al procesar mensaje WebSocket: {e}")
-        finally:
-            self.open = True
+            
 
-       
-       
-        
+
     
     @Slot()
     def on_disconnected(self):
