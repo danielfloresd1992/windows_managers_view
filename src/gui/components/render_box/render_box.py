@@ -2,6 +2,7 @@ import os, json, base64, sys
 import re
 import time
 import uuid
+import msgpack
 
 
 from PySide6.QtWidgets import (
@@ -69,6 +70,7 @@ class Render_box(QFrame):
         self.image_h = 0
         self.current_pixmap = None # Guardamos el frame actual para re-escalar
         self.component_key = str(uuid.uuid4())
+        self.can_send_next_frame = True  # Bandera para controlar envío recursivo
         
         self.setup_ui()
         
@@ -237,7 +239,7 @@ class Render_box(QFrame):
                     
                 print("✅ Proceso de captura iniciado")
             else:
-                self.process.readyReadStandardOutput.connect(self.loop_show_result)
+            #    self.process.readyReadStandardOutput.connect(self.loop_show_result)
                 pass
                 
         except Exception as e:
@@ -251,7 +253,7 @@ class Render_box(QFrame):
     def pause_loop(self):
         if self.process:
             pass
-            self.process.readyReadStandardOutput.disconnect(self.loop_show_result)
+        #    self.process.readyReadStandardOutput.disconnect(self.loop_show_result)
             self.text_fps.setText("Tasa de FPS: 0")
             print(self.process.processId())
 
@@ -262,8 +264,10 @@ class Render_box(QFrame):
         self.smart_mode = not self.smart_mode
         if self.smart_mode:
             self.btn_smart.setStyleSheet('background-color: #FF0000;')
+            self.can_send_next_frame = True  # Permitir envío inicial al activar
         else :
             self.btn_smart.setStyleSheet('background-color: #BFBFBF;')
+            self.can_send_next_frame = True  # Resetear al desactivar
         
 
 
@@ -287,6 +291,7 @@ class Render_box(QFrame):
         self.imagen_label.setPixmap(QPixmap())
         self.imagen_label.clear()
         self.imagen_label.setText("viewing window")
+        self.can_send_next_frame = True  # Resetear bandera al detener
         #self.close_socket()
         
 
@@ -314,64 +319,58 @@ class Render_box(QFrame):
     def loop_show_result(self):
         if not self.process:
             return
-        # Leer todos los datos disponibles
-        data = self.process.readAllStandardOutput().data().decode('utf-8', errors='ignore')
-        lines = data.strip().split('\n')
-        # Procesar las líneas en pares (header e imagen)
-        i = 0
-      
-        if i < len(lines) - 1:
-     
-            line1 = lines[i].strip()
-            line2 = lines[i+1].strip()
-            # Si la primera línea está vacía, saltar
-            if not line1:
-                i += 1
+        # Leer datos como bytes (mensaje binario completo)
+        raw_data = self.process.readAllStandardOutput().data()
+        
+        if not raw_data:
+            return
+        
+        try:
+            # Deserializar mensaje binario con MessagePack
+            message = msgpack.unpackb(raw_data, raw=False)
+            
+            # Extraer header e imagen
+            header = message.get('header')
+            image_bytes = message.get('image_bytes')
+            
+            if not header or not image_bytes:
+                print("Mensaje binario incompleto")
                 return
-            # Verificar que no son mensajes de error
-            if line1.startswith(('qt.', 'Traceback', 'File "', 'UnicodeEncodeError')):
-                i += 1
-                return
+            
+            # Cálculo de FPS (igual que antes)
+            self.frame_count += 1
+            now = time.time()
+            if now - self.last_fps_time >= 1.0:
+                self.current_fps = self.frame_count
+                self.frame_count = 0
+                self.last_fps_time = now
+                self.text_fps.setText(f'Tasa de FPS: {self.current_fps}')
+            
+            if self.socket is not None:
+                # Mantén imagen como bytes (sin base64)
+                result_coordinates = self.imagen_label.get_coordinates(self.image_w, self.image_h)
                 
-            try:
-                header = json.loads(line1)
-                # Verificar que tiene la estructura esperada
-                if not isinstance(header, dict) or 'timestamp' not in header:
-                    i += 2
-                    return
+                data = {
+                    'header': header,
+                    'image': image_bytes,  # Bytes crudos
+                    'roi_coordinates': result_coordinates,
+                    'roi_activate': self.activate_roi,
+                    'camera_id': self.component_key
+                }
                 
-                image_bytes = base64.b64decode(line2)
-                # Cálculo de FPS
-                self.frame_count += 1
-                now = time.time()
-                if now - self.last_fps_time >= 1.0:
-                    self.current_fps = self.frame_count
-                    self.frame_count = 0
-                    self.last_fps_time = now
-                    self.text_fps.setText(f'Tasa de FPS: {self.current_fps}')
-                
-                if not self.socket == None: 
-                    image_base64 = base64.b64encode(image_bytes).decode()
-                    result_coordinates = self.imagen_label.get_coordinates(self.image_w, self.image_h)
-                    
-                    data = {
-                            'header': header,
-                            'image' : image_base64,
-                            'roi_coordinates': result_coordinates,
-                            'roi_activate' : self.activate_roi
-                        }
-                    
-                    if self.smart_mode:
-                        self.socket.send_frame(self.component_key ,data)
-                        print('frame sent to websocket')
-                        
-                    else: 
-                        self.update_streaming_frame(image_base64, type_image='base64', tets=True)
-
-            except (json.JSONDecodeError, Exception) as e:
-                # Ignorar errores y continuar con el siguiente par
-                print(f"💥 Error procesando líneas: {e}")
-            i += 2
+                if self.smart_mode and self.can_send_next_frame:
+                    # Asume que socket tiene send_binary_frame()
+                    self.socket.send_binary_frame(self.component_key, data)
+                    self.can_send_next_frame = False  # Bloquear envío hasta recibir respuesta
+                    print('frame sent to websocket (binario)')
+                elif not self.smart_mode:
+                    # Para mostrar localmente, usa bytes JPEG directamente
+                    self.update_streaming_frame(image_bytes, type_image='jpeg_bytes', tets=True)
+        
+        except (msgpack.exceptions.ExtraData, ValueError, Exception) as e:
+            print(f"Error procesando mensaje binario: {e}")
+        
+        # No hay loop recursivo; ajusta según lógica
             
             
         
@@ -384,6 +383,8 @@ class Render_box(QFrame):
                 base64_str = re.sub(r'^data:image/\w+;base64,', '', frame)
                 frame_bytes = base64.b64decode(base64_str)
                 map = pixmap.loadFromData(frame_bytes, 'JPEG')
+            elif type_image == 'jpeg_bytes':
+                map = pixmap.loadFromData(frame, 'JPEG')
             else:
                 map = pixmap.loadFromData(frame, "PNG")
 
@@ -521,19 +522,18 @@ class Render_box(QFrame):
     def on_text_message_received(self, message):
         """Manejador llamado cuando se recibe un mensaje de texto."""
         try:
-            print(message['component_key'])
-            
             if message['component_key'] != self.component_key: return
             
             data = message['data']
+            print(data['camera_id'])
+            print(self.component_key)
             
-            if data['status'] == 'success':
-                
-                for key in data:
-                    print(key)
-                    
+            if data['status'] == 'success' and data['camera_id'] == self.component_key:
+         
                 processed_image = data['processed_image']
-                self.update_streaming_frame(processed_image, type_image='base64', tets=False)                
+                self.update_streaming_frame(processed_image, type_image='base64', tets=False)
+                self.can_send_next_frame = True  # Permitir envío del siguiente frame      
+                          
             if data['status'] == 'error':
                 raise Exception(data.get('message', 'Error desconocido del servidor'))
      

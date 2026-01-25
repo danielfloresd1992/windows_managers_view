@@ -40,7 +40,7 @@ class CustomStatusBar(QStatusBar):
         self.container_layout.addStretch()
         
         self.layout_selector = QComboBox()
-        self.layout_selector.addItems(['Seleccione...', 'Lavado', 'Perimetrales', 'Personal de Amazonas'])
+        self.layout_selector.addItems(['Seleccione...', 'Lavado', 'Perimetrales', 'PerimetralesMultiCam', 'Personal de Amazonas'])
         self.layout_selector.currentTextChanged.connect(self._on_selector_changed)
         "inserción______⤵️_______"
         self.container_layout.addWidget(QLabel("Tipos de inferencias:")) # Etiqueta opcional

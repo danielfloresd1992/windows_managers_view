@@ -2,6 +2,7 @@ from PySide6.QtWebSockets import QWebSocket
 from PySide6.QtCore import QObject, Signal, QUrl, QTimer, Slot
 from PySide6.QtNetwork import QAbstractSocket
 import json
+import msgpack
 
 
 
@@ -27,6 +28,7 @@ class Socket_services(QObject):
         self.client.connected.connect(self._on_connected)
         self.client.disconnected.connect(self._on_disconnected)
         self.client.textMessageReceived.connect(self.on_text_message_received)
+        self.client.binaryMessageReceived.connect(self.on_binary_message_received)
 
 
         
@@ -135,6 +137,22 @@ class Socket_services(QObject):
             print(e)
     
     
+    def send_binary_frame(self, component_key, frame_data):
+        try:
+            if component_key is None: raise ValueError('component_key o campos de frame_data son indefinidos')
+            
+            data_to_send = {
+                'event': 'inference',
+                'id_connection': self.id_connection,
+                'type_inference': self.type_inference,
+                'component_key': component_key,
+                'data': frame_data
+            }
+
+            binary_data = msgpack.packb(data_to_send)
+            self.client.sendBinaryMessage(binary_data)
+        except Exception as e:
+            print(e)
     
     
     @Slot(str)
@@ -148,4 +166,20 @@ class Socket_services(QObject):
             elif data['event'] == 'inference': 
                 print(data['component_key'])
                 self.signal_inference.emit(data)
+
+
+
+    @Slot(bytes)
+    def on_binary_message_received(self, message):
+        try:
+            data = msgpack.unpackb(message, raw=False)
+            if data.get('event') is not None:
+                
+                if data['event'] == 'conection_init': self.id_connection = data['id_connection']
+
+                elif data['event'] == 'inference': 
+              
+                    self.signal_inference.emit(data)
+        except Exception as e:
+            print(f"Error procesando mensaje binario: {e}")
             

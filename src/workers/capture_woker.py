@@ -98,6 +98,10 @@ def pil_image_to_png_bytes(imagen_pil, format="PNG", quality=None):
         return None
     
 
+import msgpack  # Agrega esta línea para serialización binaria
+
+# ... (código existente antes del main)
+
 # 🔥 MANEJO SEGURO DE ARGUMENTOS
 if __name__ == "__main__":
     try:
@@ -118,9 +122,15 @@ if __name__ == "__main__":
                         "format": "JPEG"
                     }
                     
-                    # 🔥 ESCRIBIR DIRECTAMENTE A stdout SIN BUFFER
-                    sys.stdout.write(json.dumps(header) + "\n")
-                    sys.stdout.write(base64.b64encode(image_bytes).decode() + "\n")
+                    # Serializar mensaje binario con MessagePack
+                    message = {
+                        'header': header,
+                        'image_bytes': image_bytes
+                    }
+                    binary_message = msgpack.packb(message)
+                    
+                    # Enviar bytes directamente a stdout
+                    sys.stdout.buffer.write(binary_message)
                     sys.stdout.flush()
                     
             time.sleep(1 / 90)

@@ -5,7 +5,7 @@ import time
 import requests
 import json
 import cv2
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 
 
@@ -45,7 +45,7 @@ def open_device(name, ip, http_port, rtsp_port, user, password):
         
         
     except requests.exceptions.HTTPError as e:
-
+        print(e.response)
         if e.response and e.response.status_code == 401:
             result['message'] = f'{ip}:{http_port}", False, "invalid_credentials'
         else:
@@ -54,31 +54,35 @@ def open_device(name, ip, http_port, rtsp_port, user, password):
         result['error'] = 'invalid_credentials'
         return result
             
-    except requests.exceptions.ConnectionError:
-            result['message'] = f'{ip}:{http_port}", connection_error'
-            result['error'] = 'connection_error'
-            return result
+    except requests.exceptions.ConnectionError as e:
+        print(e)
+        result['message'] = f'{ip}:{http_port}, connection_error'
+        result['error'] = 'connection_error'
+        return result
             
-    except requests.exceptions.Timeout:
-        result['message'] = f'{ip}:{http_port}", timeout'
+    except requests.exceptions.Timeout as e:
+        print(e)
+        result['message'] = f'{ip}:{http_port}, timeout'
         result['error'] = 'timeout'
         return result
     except Exception as e:
+        print(str(e))
         result['message'] = f'{ip}:{http_port}, unknown_error: {str(e)}'
         result['error'] = 'unknown_error'
         return result
         
         
 
-result = open_device(name='amazonas', ip='72.68.60.117', http_port='8080', rtsp_port=554, user='test', password='test1234')
+#operaciones = open_device(name='amazonas', ip='72.68.60.117', http_port='8080', rtsp_port=554, user='test', password='test1234')
+
+operaciones = open_device(name='reportes', ip='72.68.60.118', http_port='8081', rtsp_port=554, user='test', password='prueba1234')
+
+print(operaciones)
 
 
-
-
-
-if result['valid']:
+if operaciones['valid']:
    
-    url = f"rtsp://{result['data']['user']}:{result['data']['password']}@{result['data']['ip']}:{result['data']['rtsp_port']}/Streaming/Channels/202"
+    url = f"rtsp://{operaciones['data']['user']}:{operaciones['data']['password']}@{operaciones['data']['ip']}:{operaciones['data']['rtsp_port']}/Streaming/Channels/202"
     
     cap = cv2.VideoCapture(url)
     

@@ -8,6 +8,10 @@ from hikvisionapi import Client
 
 
 class ConnectionCheckThread(QThread):
+    
+    ###  _STATUS DEVICE _INFO DEVICE _GET_FRAME
+
+    
     result = Signal(int, bool)  # index, connected
 
     def __init__(self, devices):
