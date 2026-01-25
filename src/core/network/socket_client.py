@@ -5,7 +5,6 @@ import json
 import msgpack
 
 
-
 class Socket_services(QObject):
     
   
@@ -159,12 +158,16 @@ class Socket_services(QObject):
     def on_text_message_received(self, message):
     
         data = json.loads(message)
+        
+        for key in data:
+            print(key)
+            
+            
         if data.get('event') is not None:
             
             if data['event'] == 'conection_init': self.id_connection = data['id_connection']
 
             elif data['event'] == 'inference': 
-                print(data['component_key'])
                 self.signal_inference.emit(data)
 
 
@@ -173,6 +176,7 @@ class Socket_services(QObject):
     def on_binary_message_received(self, message):
         try:
             data = msgpack.unpackb(message, raw=False)
+            
             if data.get('event') is not None:
                 
                 if data['event'] == 'conection_init': self.id_connection = data['id_connection']

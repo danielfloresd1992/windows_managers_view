@@ -255,9 +255,6 @@ class Render_box(QFrame):
             pass
         #    self.process.readyReadStandardOutput.disconnect(self.loop_show_result)
             self.text_fps.setText("Tasa de FPS: 0")
-            print(self.process.processId())
-
-
 
 
     def activate_modesmart(self):
@@ -362,7 +359,7 @@ class Render_box(QFrame):
                     # Asume que socket tiene send_binary_frame()
                     self.socket.send_binary_frame(self.component_key, data)
                     self.can_send_next_frame = False  # Bloquear envío hasta recibir respuesta
-                    print('frame sent to websocket (binario)')
+                
                 elif not self.smart_mode:
                     # Para mostrar localmente, usa bytes JPEG directamente
                     self.update_streaming_frame(image_bytes, type_image='jpeg_bytes', tets=True)
@@ -524,10 +521,20 @@ class Render_box(QFrame):
         try:
             if message['component_key'] != self.component_key: return
             
-            data = message['data']
-            print(data['camera_id'])
-            print(self.component_key)
+            for key in message['data']:
+          
+                if(key == 'metadata'): 
+                    list_alert = message['data'][key]['alerts']
+                    if len(list_alert) > 0 : 
+                        for iteration in list_alert:
+                            print(iteration)
+                    
+                    
+                
+                
             
+            data = message['data']
+   
             if data['status'] == 'success' and data['camera_id'] == self.component_key:
          
                 processed_image = data['processed_image']
