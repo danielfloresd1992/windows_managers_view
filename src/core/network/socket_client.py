@@ -156,17 +156,9 @@ class Socket_services(QObject):
     
     @Slot(str)
     def on_text_message_received(self, message):
-    
-        data = json.loads(message)
-        
-        for key in data:
-            print(key)
-            
-            
+        data = json.loads(message)   
         if data.get('event') is not None:
-            
             if data['event'] == 'conection_init': self.id_connection = data['id_connection']
-
             elif data['event'] == 'inference': 
                 self.signal_inference.emit(data)
 
@@ -176,13 +168,9 @@ class Socket_services(QObject):
     def on_binary_message_received(self, message):
         try:
             data = msgpack.unpackb(message, raw=False)
-            
             if data.get('event') is not None:
-                
                 if data['event'] == 'conection_init': self.id_connection = data['id_connection']
-
                 elif data['event'] == 'inference': 
-              
                     self.signal_inference.emit(data)
         except Exception as e:
             print(f"Error procesando mensaje binario: {e}")

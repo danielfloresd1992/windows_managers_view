@@ -2,7 +2,7 @@ import sys
 import os
 import numpy as np
 from PIL import Image
-
+from dotenv import load_dotenv
 
 ### MODELS AND DATA
 from model.windows.list_windows import open_windows_windows
@@ -28,7 +28,7 @@ from gui.components.sidebar.sidebar_dock import Sidebar_Dock
 from model.settings_model import SettingsModel
 
 ## rest ann straming
-
+from core.network.jarvis_api import Jarvis_api
 from core.network.socket_client import Socket_services
 
         
@@ -48,16 +48,22 @@ def load_stylesheet():
 
 def main():
     try:
+        load_dotenv()
+        
+        email_jarvis = os.getenv('jarvis_email')
+        password_jarvis = os.getenv('jarvis_password')
+        url_api_jarvis = os.getenv('jarvis_url')
+        
         settingsModel = SettingsModel()
-    #   settingsModel.update_box_config(10, 'arr', [[]])
-
-        print(f'cantidad de box: {settingsModel.get("amount_renderbox")}')
         list_windows = open_windows_windows()
         
         
         app = AppSingleton.initialize(sys.argv)
         app.setStyleSheet(load_stylesheet())
         
+        jarvis_api = Jarvis_api(emailuser=email_jarvis, password=password_jarvis, url_api=url_api_jarvis)
+  
+  
         socket_client = Socket_services()
         
     
@@ -66,6 +72,7 @@ def main():
 
         window_containter = MainWindow(
             socket_service=socket_client,
+            jarvis_api=jarvis_api,
             data_model_gui = settingsModel
         )
         
@@ -100,14 +107,11 @@ def main():
         dock.setTitleBarWidget(QWidget())
         windowsPrincipal.addDockWidget(Qt.LeftDockWidgetArea, dock)  # lo acoplas a la izquierda
     
-     
-        
         window_containter.show()
-        
-        
+    
         splashScreen.finish(windowsPrincipal)
-
         return app.exec()
+        
 
 
     except Exception as e:

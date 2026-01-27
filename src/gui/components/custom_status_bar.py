@@ -9,8 +9,10 @@ class CustomStatusBar(QStatusBar):
     
     inference_type_selected = Signal(str)
     
-    def __init__(self):
+    def __init__(self, list_establishment=[]):
         super().__init__(parent=None)
+        print(list_establishment)
+        self.list_establishment =  list_establishment
         self.setup_ui()
         
         
@@ -30,9 +32,26 @@ class CustomStatusBar(QStatusBar):
         self.addPermanentWidget(container)
         
         
+        """______Lista de clientes_______"""
+        if len(self.list_establishment) > 0:
+            new_list = []
+            
+            for iteration in self.list_establishment:
+                new_list.append(iteration['name'])
+
+            list_label = QLabel('Selecione el cliente: ')
+            self.selector_establishment = QComboBox()
+            self.selector_establishment.addItem('Seleccione...')
+            self.selector_establishment.addItems(new_list)
+            self.container_layout.addWidget(list_label)
+            self.container_layout.addWidget(self.selector_establishment)
+            self.container_layout.addStretch()
+            
+        
+        
         """____Indicador del server___"""
         self.msg_label = QLabel('Selecione el tipo de inferencia --->')
-        self.indicator = QLabel('●')
+        self .indicator = QLabel('●')
         self.indicator.setStyleSheet('color: gray;')
         "inserción______⤵️_______"
         self.container_layout.addWidget(self.indicator)

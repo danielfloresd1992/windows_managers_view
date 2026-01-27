@@ -11,7 +11,7 @@ class SettingsModel:
     def __init__(self, app_name='windows_managers_view', filename='config.json', keyfile='cfghwrpoñm,.}ht4780sSDCWAG.key'): 
 
         config_dir = user_config_dir(app_name)
-        print(config_dir)
+      
         self.key_path = os.path.join(config_dir, keyfile)
         
         os.makedirs(os.path.dirname(self.key_path), exist_ok=True)
@@ -39,7 +39,7 @@ class SettingsModel:
         
         
     def load_config(self): 
-        print(self.file_path)
+
         if os.path.exists(self.file_path): 
             try:
                 with open(self.file_path, 'r', encoding='utf-8') as file: 
@@ -93,10 +93,8 @@ class SettingsModel:
     def update_box_config(self, index, key, value):
         """ Actualiza o añade una propiedad dentro de un diccionario de boxs_config. """ 
         for box in self.data['boxs_config']: 
-
-            print(box['index'])
+     
             if box['index'] == index:
-                print(box)
                 box[key] = value 
                 self.save_config() 
                 
@@ -111,6 +109,7 @@ class SettingsModel:
         for box in self.data['boxs_config']:
             if box['index'] == index:
                return box
+
 
     def add_device(self, name, ip, http_port, rtsp_port, user, password):
         device = {

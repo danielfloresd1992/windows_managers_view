@@ -16,14 +16,15 @@ class MainWindow(QMainWindow):
     MARGIN = 16  # margen sensible para detectar bordes
 
 
-    def __init__(self, socket_service, data_model_gui = None, amount_renderbox=2, data_box=None):
+    def __init__(self, socket_service, jarvis_api=None, data_model_gui = None, amount_renderbox=2, data_box=None):
         super().__init__()
-        self.setObjectName('MainWindowStyle')
-        self.setAttribute(Qt.WA_StyledBackground, True)
-        self.setWindowFlag(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
-        self.setContentsMargins(0,0,0,0)
         
-        self.center_windows()
+        
+        # TODAS LAS INTERACIONES CON JARVIS OCURREN MEDIANTE ESTA CLASE  🔽
+        self.jarvis_api = jarvis_api                               #  jarvis_api
+        ########################################################################
+        
+        
         
         # variables internas para resize
         self._resizing = False
@@ -45,8 +46,7 @@ class MainWindow(QMainWindow):
         self.socket.disconnected_signal.connect(self.footer_bar.update_ui)
         self.socket.re_connect_signal.connect(self.footer_bar.receive_message)
     
-    
-        
+       
 
         # 🔑 activar mouse tracking en toda la jerarquía
         self.setMouseTracking(True)
@@ -63,9 +63,13 @@ class MainWindow(QMainWindow):
 
 
     def setup_ui(self):
-       
+        self.setObjectName('MainWindowStyle')
+        self.setAttribute(Qt.WA_StyledBackground, True)
+        self.setWindowFlag(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        self.setContentsMargins(0,0,0,0)
         self.resize(1024, 768)
-
+        self.center_windows()
+        
         main_content = QWidget()
         main_content.setContentsMargins(0,0,0,0)
         self.layout_main = QVBoxLayout(main_content)
@@ -156,11 +160,12 @@ class MainWindow(QMainWindow):
         
         
         """____BARRA DE OPCIONES___"""
-        self.footer_bar = CustomStatusBar()
+        self.footer_bar = CustomStatusBar(list_establishment = self.jarvis_api.list_of_establishments)
         self.footer_bar.btn_layout.clicked.connect(self.open_dialog)
         self.footer_bar.inference_type_selected.connect(self.socket_init)
         self.footer_bar.btn_stopconection.clicked.connect(self.socket_close)
         self.footer_bar.setStyleSheet("QStatusBar { background-color: #424242; color: white; }")
+        self.footer_bar.selector_establishment.currentTextChanged.connect(self.jarvis_api.selection_establishment)
         "inserción______⤵️_______"
         self.window_child.setStatusBar(self.footer_bar)
         
@@ -215,28 +220,23 @@ class MainWindow(QMainWindow):
     def create_list_box(self, data=None):
         for i in range(16):
             
-            if data != None and data[i]['index'] == i:
-                print(data[i])
-            
-            print(self.data_model_gui.get('boxs_config')[i])
-            
             box_config = self.data_model_gui.get_box_config(i)
-         
             activate_roi = box_config['activate_roi']
             roi = box_config['roi']
             
-            box = Render_box(index=len(self.list_box), socket_services=self.socket, roi=roi, activate_roi=activate_roi, callback_save_roi=self._save_data_render_box)
-            
+            box = Render_box(index=len(self.list_box), socket_services=self.socket, roi=roi, activate_roi=activate_roi, callback_save_roi=self._save_data_render_box, api_jarvis=self.jarvis_api)
+
             box.double_clicked_signal.connect(self.render_maxized_box)
             self.list_box.append(box)
         
         
+        
     def _save_data_render_box(self, index, list_point, activate_roi):
-
         if self.data_model_gui is not None and hasattr(self.data_model_gui, 'update_box_config'):
             self.data_model_gui.update_box_config(index, 'roi', list_point)
             self.data_model_gui.update_box_config(index, 'activate_roi', activate_roi)
             self.data_model_gui.get_box_config(index)
+        
         
         
         

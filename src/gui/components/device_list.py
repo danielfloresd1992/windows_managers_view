@@ -11,12 +11,13 @@ class ConnectionCheckThread(QThread):
     
     ###  _STATUS DEVICE _INFO DEVICE _GET_FRAME
 
-    
     result = Signal(int, bool)  # index, connected
+    
 
     def __init__(self, devices):
         super().__init__()
         self.devices = devices
+        
 
     def run(self):
         for i, device in enumerate(self.devices):
@@ -35,11 +36,12 @@ class DeviceListWidget(QWidget):
     def __init__(self, settings_model, parent=None):
         super().__init__(parent)
         self.settings_model = settings_model
-        print(self.settings_model)
         self.devices = []
         self.setup_ui()
         self.load_devices()
         self.check_connections()
+        
+        
 
     def setup_ui(self):
         layout = QVBoxLayout(self)

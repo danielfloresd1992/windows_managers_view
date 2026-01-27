@@ -116,9 +116,8 @@ class Sidebar_Dock(QWidget):
         for i in range(self.content_layaut.count()):
             layout_item = self.content_layaut.itemAt(i)
             widget = layout_item.widget()
-            print(widget)
             if hwnd == widget.id_windows:
-      
+
                 # 1. Quitarlo del layout
                 self.content_layaut.removeWidget(widget)
                 # 2. Desvincularlo visualmente

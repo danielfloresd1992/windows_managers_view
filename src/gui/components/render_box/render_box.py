@@ -42,13 +42,14 @@ class Render_box(QFrame):
                 roi = [[100,100],[900,100],[900,900],[100,900]] ,
                 activate_roi=False, 
                 callback_save_roi = None,
-                socket_services = None
+                socket_services = None,
+                api_jarvis=None
                 ):
         super().__init__()
 
         self.setAcceptDrops(True)
         self.index = index
-        
+        self.api_jarvis = api_jarvis
         self.socket = socket_services
         self.socket.connected_signal.connect(self.reconnect_socket)
         self.socket.disconnected_signal.connect(self.diconect_socket) 
@@ -520,23 +521,28 @@ class Render_box(QFrame):
         """Manejador llamado cuando se recibe un mensaje de texto."""
         try:
             if message['component_key'] != self.component_key: return
-            
             for key in message['data']:
-          
                 if(key == 'metadata'): 
-                    list_alert = message['data'][key]['alerts']
-                    if len(list_alert) > 0 : 
-                        for iteration in list_alert:
-                            print(iteration)
-                    
-                    
-                
-                
-            
+                    for j in message['data'][key]:
+               
+                        if j == 'alerts' :
+               
+                            list_alert = message['data'][key][j]
+                     
+                            if len(list_alert) > 0 : 
+                                for iteration in list_alert:
+                                    
+                                    print('entre')
+                                    
+                                    if self.api_jarvis is not None:
+                           
+                                        self.api_jarvis.send_alert_to_api()
+                                  
+                                  
+                                  
             data = message['data']
    
             if data['status'] == 'success' and data['camera_id'] == self.component_key:
-         
                 processed_image = data['processed_image']
                 self.update_streaming_frame(processed_image, type_image='base64', tets=False)
                 self.can_send_next_frame = True  # Permitir envío del siguiente frame      
