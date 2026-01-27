@@ -41,6 +41,7 @@ class SettingsModel:
     def load_config(self): 
 
         if os.path.exists(self.file_path): 
+            print(self.file_path)
             try:
                 with open(self.file_path, 'r', encoding='utf-8') as file: 
                     token = file.read()

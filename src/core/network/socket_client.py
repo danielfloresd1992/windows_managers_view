@@ -136,6 +136,7 @@ class Socket_services(QObject):
             print(e)
     
     
+    
     def send_binary_frame(self, component_key, frame_data):
         try:
             if component_key is None: raise ValueError('component_key o campos de frame_data son indefinidos')
@@ -152,6 +153,8 @@ class Socket_services(QObject):
             self.client.sendBinaryMessage(binary_data)
         except Exception as e:
             print(e)
+    
+    
     
     
     @Slot(str)

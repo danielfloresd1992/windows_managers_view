@@ -524,21 +524,25 @@ class Render_box(QFrame):
             for key in message['data']:
                 if(key == 'metadata'): 
                     for j in message['data'][key]:
-               
                         if j == 'alerts' :
                
                             list_alert = message['data'][key][j]
-                     
                             if len(list_alert) > 0 : 
                                 for iteration in list_alert:
-                                    
-                                    print('entre')
+                
+                                    image64 = iteration['image_base64']
+                                    title =  'Vehiculo en el área (IA)'
+                                    for k in iteration:
+                                        if k != 'image_base64': 
+                                            print(k)
+                                            print(iteration['message'])
+                                            if iteration['object_type'] == 'person': title = 'Persona en el área (IA)'
+                                            
+                                    response_image = self.api_jarvis.send_base64_image(image64)
+                                    url_image = response_image[1]['url']
                                     
                                     if self.api_jarvis is not None:
-                           
-                                        self.api_jarvis.send_alert_to_api()
-                                  
-                                  
+                                        self.api_jarvis.send_alert_to_api(url_image = url_image, title=title, message=iteration['message'])
                                   
             data = message['data']
    
