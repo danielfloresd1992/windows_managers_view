@@ -14,7 +14,7 @@ from PySide6.QtCore import Qt, Slot, QProcess,  QUrl, Signal, QEvent
 from PySide6.QtWebSockets import QWebSocket
 from PySide6.QtGui import QPixmap, QCursor
 
-from ..custon_label.interactive_imageLabel import interactive_imageLabel
+from ..custon_label.interactive_imageLabel import Interactive_imageLabel
 from ..custon_btn.btn_footer import BtnIco
 
 from core.state_global.hwnd import hwndState
@@ -41,12 +41,18 @@ class Render_box(QFrame):
                 index=0, 
                 roi = [[100,100],[900,100],[900,900],[100,900]] ,
                 activate_roi=False, 
+                roi_door = [],
+                roi_door_active= False,
+                dor_direction=[],
+                dor_direction_active=False,
                 callback_save_roi = None,
                 socket_services = None,
                 api_jarvis=None
                 ):
         super().__init__()
 
+        
+        
         self.setAcceptDrops(True)
         self.index = index
         self.api_jarvis = api_jarvis
@@ -56,6 +62,11 @@ class Render_box(QFrame):
         
         self.roi = roi
         self.activate_roi = activate_roi
+        
+        self.roi_door = roi_door
+        self.roi_door_active = roi_door_active
+        self.dor_direction = dor_direction
+        self.dor_direction_active=dor_direction_active
         self.callback_save_roi = callback_save_roi
         
         self.smart_mode = False
@@ -116,13 +127,25 @@ class Render_box(QFrame):
         
         self.bar_info_layout.addWidget(self.text_fps)
         self.bar_info_layout.addWidget(self.text_size)
-        
+
         
         """__________🖼️CONTENEDOR DE IMAGEN🖼️__________"""
-        self.imagen_label = interactive_imageLabel('viewing window', roi=self.roi)
-        #self.imagen_label.self.points = self.imagen_label.list_to_qpoints(self.roi)
+        self.imagen_label = Interactive_imageLabel('viewing window', 
+        roi=self.roi,
+        roi_active=self.activate_roi, 
+        roi_door=self.roi_door,
+        roi_door_active=self.roi_door_active, 
         
-        self.imagen_label.point_change.connect(self.save_point)
+        dor_direction=self.dor_direction,
+        dor_direction_active=self.dor_direction_active
+                                                   
+                                                   )
+
+        self.imagen_label.point_change.connect(lambda list :self.save_point(list, 'roi'))
+        self.imagen_label.door_point_change.connect(lambda list :self.save_point(list,'roi_dor'))
+        self.imagen_label.door_direction_change.connect(lambda list:self.save_point(list,'roi_dor_direction'))
+        
+        
         self.imagen_label.setAlignment(Qt.AlignCenter)
         self.imagen_label.installEventFilter(self) 
         "inserción______⤵️_______"
@@ -190,6 +213,8 @@ class Render_box(QFrame):
         self.bar_info.hide()
         self.bar_options.hide()
         
+        
+    
     
     def _hideandclear_roy(self):
         self.imagen_label.toggle_points()
@@ -197,13 +222,6 @@ class Render_box(QFrame):
         
         
         
-    def reconnect_socket(self, data):
-        self.btn_smart.setEnabled(True)
-        
-        
-    def diconect_socket(self, data):
-        self.btn_smart.setEnabled(False)
-    
         
     # ---------------------------
     # Procesos de captura
@@ -256,6 +274,7 @@ class Render_box(QFrame):
             pass
         #    self.process.readyReadStandardOutput.disconnect(self.loop_show_result)
             self.text_fps.setText("Tasa de FPS: 0")
+
 
 
     def activate_modesmart(self):
@@ -347,12 +366,17 @@ class Render_box(QFrame):
             if self.socket is not None:
                 # Mantén imagen como bytes (sin base64)
                 result_coordinates = self.imagen_label.get_coordinates(self.image_w, self.image_h)
+                door_coordinates = self.imagen_label.get_door_coordinates(self.image_w, self.image_h)
+                door_direction_coordinates= self.imagen_label.get_door_direction_coordinates(self.image_w, self.image_h)
                 
                 data = {
                     'header': header,
                     'image': image_bytes,  # Bytes crudos
                     'roi_coordinates': result_coordinates,
                     'roi_activate': self.activate_roi,
+                    'door_roi_activate': self.imagen_label.door_active,
+                    'door_roi':door_coordinates,
+                    'door_direction_activate':door_direction_coordinates,
                     'camera_id': self.component_key
                 }
                 
@@ -509,10 +533,12 @@ class Render_box(QFrame):
         
         
         
+        
     @Slot()
     def on_connected(self):
         """Manejador llamado cuando la conexión WebSocket se ha establecido."""
         print("Conexión WebSocket establecida.")
+       
        
       
 
@@ -524,14 +550,13 @@ class Render_box(QFrame):
             for key in message['data']:
                 if(key == 'metadata'): 
                     for j in message['data'][key]:
-                        if j == 'alerts' :
-               
+                        if j == 'alerts':
                             list_alert = message['data'][key][j]
+                            print(list_alert)
                             if len(list_alert) > 0 : 
                                 for iteration in list_alert:
-                
                                     image64 = iteration['image_base64']
-                                    title =  'Vehiculo en el área (IA)'
+                                    title =  'Vehículo en el área (IA)'
                                     for k in iteration:
                                         if k != 'image_base64': 
                                             print(k)
@@ -567,12 +592,24 @@ class Render_box(QFrame):
         
         
         
+    def reconnect_socket(self, data):
+        self.can_send_next_frame = True
+        self.btn_smart.setEnabled(True)
+        self.loop_show_result()
+       
+        
+    def diconect_socket(self, data):
+        self.btn_smart.setEnabled(False)
+        
+        
     def close_socket(self):
         self.socket.close()
         
         
         
-    def save_point(self, list_point):
+    def save_point(self, list_point, type):
         if self.callback_save_roi is not None:
             self.callback_save_roi(index=self.index, list_point=list_point, activate_roi=self.activate_roi)
+            
+
        

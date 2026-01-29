@@ -219,12 +219,42 @@ class MainWindow(QMainWindow):
             
     def create_list_box(self, data=None):
         for i in range(16):
-            
+            '''
+            frames_per_milliseconds=100, 
+                index=0, 
+                roi = [[100,100],[900,100],[900,900],[100,900]] ,
+                activate_roi=False, 
+                roi_door = [],
+                roi_door_active= False,
+                dor_direction=[],
+                dor_direction_active=False
+                callback_save_roi = None,
+                socket_services = None,
+                api_jarvis=None
+            '''
             box_config = self.data_model_gui.get_box_config(i)
+            
             activate_roi = box_config['activate_roi']
             roi = box_config['roi']
-            
-            box = Render_box(index=len(self.list_box), socket_services=self.socket, roi=roi, activate_roi=activate_roi, callback_save_roi=self._save_data_render_box, api_jarvis=self.jarvis_api)
+            roi_door = box_config['roi_door']
+            roi_door_active = box_config['roi_door_active']
+            dor_direction = box_config['dor_direction']
+            dor_direction_active =  box_config['dor_direction_active']
+        
+            box = Render_box(
+                            index=len(self.list_box), 
+                            socket_services=self.socket, 
+                            roi=roi, 
+                            activate_roi=activate_roi,
+                            roi_door = roi_door,
+                            roi_door_active= roi_door_active,
+                             
+                            dor_direction=dor_direction,
+                            dor_direction_active=dor_direction_active,
+                
+                            callback_save_roi=self._save_data_render_box, 
+                            api_jarvis=self.jarvis_api
+                )
 
             box.double_clicked_signal.connect(self.render_maxized_box)
             self.list_box.append(box)

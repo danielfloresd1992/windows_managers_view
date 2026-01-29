@@ -72,7 +72,16 @@ class SettingsModel:
         return { 
             'last_inference': 'default', 
             'boxs_config': [
-                    {'index': i, 'roi': [[100,200],[900,100],[900,900],[100,900]], 'activate_roi': False} for i in range(16)
+                    {
+                        'index': i, 
+                        'roi': [[100,200],[900,100],[900,900],[100,900]], 
+                        'activate_roi': True,
+                        'roi_door': [[220,140],[420,140],[420,320],[220,320]],
+                        'roi_door_active': True,
+                        'dor_direction': [[50,100],[100,900]],
+                        'dor_direction_active': True
+                        
+                    } for i in range(16)
             ],
             'amount_renderbox': 2,
             'devices': []
