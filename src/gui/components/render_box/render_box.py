@@ -39,19 +39,23 @@ class Render_box(QFrame):
     def __init__(self, 
                 frames_per_milliseconds=100, 
                 index=0, 
+                
                 roi = [[100,100],[900,100],[900,900],[100,900]] ,
-                activate_roi=False, 
+                roi_boolean=False, 
+                
                 roi_door = [],
-                roi_door_active= False,
-                dor_direction=[],
-                dor_direction_active=False,
+                roi_dor_boolean= False,
+                
+                roi_dor_direction=[],
+                roi_dor_direction_boolean=False,
+                
                 callback_save_roi = None,
                 socket_services = None,
                 api_jarvis=None
                 ):
         super().__init__()
 
-        
+
         
         self.setAcceptDrops(True)
         self.index = index
@@ -61,12 +65,13 @@ class Render_box(QFrame):
         self.socket.disconnected_signal.connect(self.diconect_socket) 
         
         self.roi = roi
-        self.activate_roi = activate_roi
+        self.roi_boolean = roi_boolean
         
         self.roi_door = roi_door
-        self.roi_door_active = roi_door_active
-        self.dor_direction = dor_direction
-        self.dor_direction_active=dor_direction_active
+        self.roi_dor_boolean = roi_dor_boolean
+        
+        self.roi_dor_direction = roi_dor_direction
+        self.roi_dor_direction_boolean=roi_dor_direction_boolean
         self.callback_save_roi = callback_save_roi
         
         self.smart_mode = False
@@ -132,19 +137,18 @@ class Render_box(QFrame):
         """__________🖼️CONTENEDOR DE IMAGEN🖼️__________"""
         self.imagen_label = Interactive_imageLabel('viewing window', 
         roi=self.roi,
-        roi_active=self.activate_roi, 
-        roi_door=self.roi_door,
-        roi_door_active=self.roi_door_active, 
+        roi_active=self.roi_boolean, 
         
-        dor_direction=self.dor_direction,
-        dor_direction_active=self.dor_direction_active
+        roi_door=self.roi_door,
+        roi_door_active=self.roi_dor_boolean, 
+        
+        dor_direction=self.roi_dor_direction,
+        dor_direction_active=self.roi_dor_direction_boolean
                                                    
                                                    )
 
-        self.imagen_label.point_change.connect(lambda list :self.save_point(list, 'roi'))
-        self.imagen_label.door_point_change.connect(lambda list :self.save_point(list,'roi_dor'))
-        self.imagen_label.door_direction_change.connect(lambda list:self.save_point(list,'roi_dor_direction'))
-        
+        self.imagen_label.point_change.connect(self.save_point)
+      
         
         self.imagen_label.setAlignment(Qt.AlignCenter)
         self.imagen_label.installEventFilter(self) 
@@ -218,7 +222,7 @@ class Render_box(QFrame):
     
     def _hideandclear_roy(self):
         self.imagen_label.toggle_points()
-        self.activate_roi = not self.activate_roi
+        self.roi_boolean = not self.roi_boolean
         
         
         
@@ -258,7 +262,7 @@ class Render_box(QFrame):
                     
                 print("✅ Proceso de captura iniciado")
             else:
-            #    self.process.readyReadStandardOutput.connect(self.loop_show_result)
+                self.process.readyReadStandardOutput.connect(self.loop_show_result)
                 pass
                 
         except Exception as e:
@@ -281,6 +285,7 @@ class Render_box(QFrame):
         self.smart_mode = not self.smart_mode
         if self.smart_mode:
             self.btn_smart.setStyleSheet('background-color: #FF0000;')
+            self.stop = False
             self.can_send_next_frame = True  # Permitir envío inicial al activar
         else :
             self.btn_smart.setStyleSheet('background-color: #BFBFBF;')
@@ -372,16 +377,25 @@ class Render_box(QFrame):
                 data = {
                     'header': header,
                     'image': image_bytes,  # Bytes crudos
+                    
+                    # ROI GENERAL
                     'roi_coordinates': result_coordinates,
-                    'roi_activate': self.activate_roi,
-                    'door_roi_activate': self.imagen_label.door_active,
-                    'door_roi':door_coordinates,
-                    'door_direction_activate':door_direction_coordinates,
+                    'roi_activate':  self.roi_boolean,
+
+                    # ROI DE PUERTA
+                    'door_roi_coordinates':door_coordinates,
+                    'door_roi_activate': True, # self.imagen_label.door_direction_active,
+                    
+                    # roi de corrdenadas
+                    'door_direction': door_direction_coordinates,
+                    'door_direction_activate': True, #door_direction_coordinates,
+                    
                     'camera_id': self.component_key
                 }
                 
                 if self.smart_mode and self.can_send_next_frame:
                     # Asume que socket tiene send_binary_frame()
+             
                     self.socket.send_binary_frame(self.component_key, data)
                     self.can_send_next_frame = False  # Bloquear envío hasta recibir respuesta
                 
@@ -547,40 +561,49 @@ class Render_box(QFrame):
         """Manejador llamado cuando se recibe un mensaje de texto."""
         try:
             if message['component_key'] != self.component_key: return
+            
+            
             for key in message['data']:
+               
+
                 if(key == 'metadata'): 
                     for j in message['data'][key]:
+                        
                         if j == 'alerts':
                             list_alert = message['data'][key][j]
-                            print(list_alert)
                             if len(list_alert) > 0 : 
+                                
                                 for iteration in list_alert:
                                     image64 = iteration['image_base64']
+                                    
+                                    if image64 is None: 
+                                        print('sin imagen')
+                                        continue
+                                    
                                     title =  'Vehículo en el área (IA)'
-                                    for k in iteration:
-                                        if k != 'image_base64': 
-                                            print(k)
-                                            print(iteration['message'])
-                                            if iteration['object_type'] == 'person': title = 'Persona en el área (IA)'
-                                            
+                                    if iteration['object_type'] == 'person': title = 'Persona en el área (IA)'
                                     response_image = self.api_jarvis.send_base64_image(image64)
                                     url_image = response_image[1]['url']
                                     
                                     if self.api_jarvis is not None:
+                                        pass
                                         self.api_jarvis.send_alert_to_api(url_image = url_image, title=title, message=iteration['message'])
-                                  
+            
             data = message['data']
-   
+            
             if data['status'] == 'success' and data['camera_id'] == self.component_key:
                 processed_image = data['processed_image']
                 self.update_streaming_frame(processed_image, type_image='base64', tets=False)
-                self.can_send_next_frame = True  # Permitir envío del siguiente frame      
+                  # Permitir envío del siguiente frame      
                           
             if data['status'] == 'error':
                 raise Exception(data.get('message', 'Error desconocido del servidor'))
-     
+      
         except Exception as e:
             print(f"💥 Error al procesar mensaje WebSocket: {e}")
+        finally:
+            self.can_send_next_frame = True
+            
             
 
 
@@ -607,9 +630,17 @@ class Render_box(QFrame):
         
         
         
-    def save_point(self, list_point, type):
-        if self.callback_save_roi is not None:
-            self.callback_save_roi(index=self.index, list_point=list_point, activate_roi=self.activate_roi)
+    def save_point(self, 
+                    roi, roi_boolean, 
+                    roi_door, roi_dor_boolean, 
+                    roi_dor_direction, roi_dor_direction_boolean
+                   ):
+        if self.callback_save_roi is not None: 
+                self.callback_save_roi(index=self.index, 
+                                        roi=roi, roi_boolean=roi_boolean, 
+                                        roi_door=roi_door, roi_dor_boolean=roi_dor_boolean, 
+                                        roi_dor_direction=roi_dor_direction, roi_dor_direction_boolean=roi_dor_direction_boolean
+                                    )
             
 
        

@@ -148,7 +148,7 @@ class Socket_services(QObject):
                 'component_key': component_key,
                 'data': frame_data
             }
-
+         
             binary_data = msgpack.packb(data_to_send)
             self.client.sendBinaryMessage(binary_data)
         except Exception as e:
@@ -160,6 +160,7 @@ class Socket_services(QObject):
     @Slot(str)
     def on_text_message_received(self, message):
         data = json.loads(message)   
+     
         if data.get('event') is not None:
             if data['event'] == 'conection_init': self.id_connection = data['id_connection']
             elif data['event'] == 'inference': 
@@ -171,6 +172,7 @@ class Socket_services(QObject):
     def on_binary_message_received(self, message):
         try:
             data = msgpack.unpackb(message, raw=False)
+      
             if data.get('event') is not None:
                 if data['event'] == 'conection_init': self.id_connection = data['id_connection']
                 elif data['event'] == 'inference': 

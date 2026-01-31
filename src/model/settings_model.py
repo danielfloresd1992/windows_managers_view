@@ -67,7 +67,6 @@ class SettingsModel:
             
                 
                 
-                
     def default_config(self): 
         return { 
             'last_inference': 'default', 
@@ -75,11 +74,11 @@ class SettingsModel:
                     {
                         'index': i, 
                         'roi': [[100,200],[900,100],[900,900],[100,900]], 
-                        'activate_roi': True,
+                        'roi_boolean': True,
                         'roi_door': [[220,140],[420,140],[420,320],[220,320]],
-                        'roi_door_active': True,
-                        'dor_direction': [[50,100],[100,900]],
-                        'dor_direction_active': True
+                        'roi_dor_boolean': True,
+                        'roi_dor_direction': [[50,100],[100,900]],
+                        'roi_dor_direction_boolean': True
                         
                     } for i in range(16)
             ],

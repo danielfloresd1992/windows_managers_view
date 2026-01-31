@@ -234,23 +234,26 @@ class MainWindow(QMainWindow):
             '''
             box_config = self.data_model_gui.get_box_config(i)
             
-            activate_roi = box_config['activate_roi']
             roi = box_config['roi']
+            roi_boolean = box_config['roi_boolean']
+            
             roi_door = box_config['roi_door']
-            roi_door_active = box_config['roi_door_active']
-            dor_direction = box_config['dor_direction']
-            dor_direction_active =  box_config['dor_direction_active']
+            roi_dor_boolean = box_config['roi_dor_boolean']
+            
+            roi_dor_direction = box_config['roi_dor_direction']
+            roi_dor_direction_boolean =  box_config['roi_dor_direction_boolean']
         
             box = Render_box(
                             index=len(self.list_box), 
                             socket_services=self.socket, 
                             roi=roi, 
-                            activate_roi=activate_roi,
+                            roi_boolean=roi_boolean,
+                            
                             roi_door = roi_door,
-                            roi_door_active= roi_door_active,
+                            roi_dor_boolean=roi_dor_boolean,
                              
-                            dor_direction=dor_direction,
-                            dor_direction_active=dor_direction_active,
+                            roi_dor_direction=roi_dor_direction,
+                            roi_dor_direction_boolean=roi_dor_direction_boolean,
                 
                             callback_save_roi=self._save_data_render_box, 
                             api_jarvis=self.jarvis_api
@@ -261,10 +264,18 @@ class MainWindow(QMainWindow):
         
         
         
-    def _save_data_render_box(self, index, list_point, activate_roi):
+    def _save_data_render_box(self, index, 
+                                        roi, roi_boolean,
+                                        roi_door, roi_dor_boolean, 
+                                        roi_dor_direction,  roi_dor_direction_boolean
+                                    ):
         if self.data_model_gui is not None and hasattr(self.data_model_gui, 'update_box_config'):
-            self.data_model_gui.update_box_config(index, 'roi', list_point)
-            self.data_model_gui.update_box_config(index, 'activate_roi', activate_roi)
+            self.data_model_gui.update_box_config(index, 'roi', roi)
+            self.data_model_gui.update_box_config(index, 'roi_boolean', roi_boolean)
+            self.data_model_gui.update_box_config(index, 'roi_door', roi_door)
+            self.data_model_gui.update_box_config(index, 'roi_dor_boolean', roi_dor_boolean)
+            self.data_model_gui.update_box_config(index, 'roi_dor_direction', roi_dor_direction)
+            self.data_model_gui.update_box_config(index, 'roi_dor_direction_boolean', roi_dor_direction_boolean)
             self.data_model_gui.get_box_config(index)
         
         

@@ -5,7 +5,7 @@ from PySide6.QtGui import QPixmap, QMouseEvent, QPainter, QBrush, QPen
 
 class Interactive_imageLabel(QLabel):
     
-    point_change = Signal(list)
+    point_change = Signal(list,bool, list,bool, list, bool)
     door_point_change = Signal(list)
     door_direction_change = Signal(list)
     
@@ -241,7 +241,6 @@ class Interactive_imageLabel(QLabel):
 
 
 
-
     def mouseReleaseEvent(self, event: QMouseEvent):
         if not self.show_points and not (self.door_active or self.door_direction_active or self.edit_target != 'roi'):
             return
@@ -249,13 +248,27 @@ class Interactive_imageLabel(QLabel):
             self.active_point_index = -1
             self.update()
             # emitir la señal correspondiente según el objetivo de edición
+            '''
             if self.edit_target == 'roi':
-                self.point_change.emit(self.qpoints_to_list(qpoints = self.points))
+                self.point_change.emit(
+                        roi=self.qpoints_to_list(qpoints = self.points), roi_boolean=self.show_points, 
+                        roi_door=self.qpoints_to_list(qpoints = self.door_points), roi_dor_boolean=self.door_active, 
+                        roi_dor_direction=self.qpoints_to_list(qpoints = self.door_direction), roi_dor_direction_boolean=self.door_direction_active
+                    )
             elif self.edit_target == 'door':
                 self.door_point_change.emit(self.qpoints_to_list(qpoints = self.door_points))
             else:
                 self.door_direction_change.emit(self.qpoints_to_list(qpoints = self.door_direction))
-            
+            '''
+            self.point_change.emit(
+                        self.qpoints_to_list(qpoints = self.points), 
+                        
+                        self.show_points, 
+                        self.qpoints_to_list(qpoints = self.door_points), 
+                        self.door_active, 
+                        self.qpoints_to_list(qpoints = self.door_direction), 
+                        self.door_direction_active
+                    )
         super().mouseReleaseEvent(event)
 
 

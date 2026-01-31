@@ -11,7 +11,6 @@ class CustomStatusBar(QStatusBar):
     
     def __init__(self, list_establishment=[]):
         super().__init__(parent=None)
-        print(list_establishment)
         self.list_establishment =  list_establishment
         self.setup_ui()
         
