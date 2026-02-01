@@ -180,3 +180,13 @@ class Socket_services(QObject):
         except Exception as e:
             print(f"Error procesando mensaje binario: {e}")
             
+            
+    def is_connected(self):
+        """
+        Retorna True si el socket está físicamente conectado y listo para transmitir.
+        Retorna False en cualquier otro caso (conectando, cerrando, desconectado).
+        """
+        if self.client is None:
+            return False
+            
+        return self.client.state() == QAbstractSocket.ConnectedState

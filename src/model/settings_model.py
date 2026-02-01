@@ -69,16 +69,24 @@ class SettingsModel:
                 
     def default_config(self): 
         return { 
-            'last_inference': 'default', 
+            'principal_box': -1,
+            'last_inference': None, 
+            'selected_establishment':  None,
             'boxs_config': [
                     {
+                        'hwnd': None,
                         'index': i, 
+                        'play': False, # POR APLICAR
+                        'inference_play': False, # POR DEPURAR
+                        # ROI PRINCIPAL
                         'roi': [[100,200],[900,100],[900,900],[100,900]], 
                         'roi_boolean': True,
+                        # ROI DE PUERTA
                         'roi_door': [[220,140],[420,140],[420,320],[220,320]],
                         'roi_dor_boolean': True,
+                        # ROI DE DIRECCIÓN DE PUERTA
                         'roi_dor_direction': [[50,100],[100,900]],
-                        'roi_dor_direction_boolean': True
+                        'roi_dor_direction_boolean': True # Discarded
                         
                     } for i in range(16)
             ],

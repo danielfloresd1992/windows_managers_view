@@ -18,7 +18,7 @@ from ..custon_label.interactive_imageLabel import Interactive_imageLabel
 from ..custon_btn.btn_footer import BtnIco
 
 from core.state_global.hwnd import hwndState
-from core.capture_exaple import capture_window_by_hwnd, pil_image_to_png_bytes
+from core.capture_exaple import capture_window_by_hwnd, pil_image_to_png_bytes, window_exists, get_title
 from core.window_controller import set_window_always_on_top
 
 
@@ -40,6 +40,9 @@ class Render_box(QFrame):
                 frames_per_milliseconds=100, 
                 index=0, 
                 
+                hwnd=None,
+                inferece_play=False,
+      
                 roi = [[100,100],[900,100],[900,900],[100,900]] ,
                 roi_boolean=False, 
                 
@@ -49,15 +52,16 @@ class Render_box(QFrame):
                 roi_dor_direction=[],
                 roi_dor_direction_boolean=False,
                 
-                callback_save_roi = None,
+                callback_save_data = None,
                 socket_services = None,
                 api_jarvis=None
                 ):
         super().__init__()
 
-
         
         self.setAcceptDrops(True)
+        self.hwnd = hwnd
+        self.smart_mode = inferece_play
         self.index = index
         self.api_jarvis = api_jarvis
         self.socket = socket_services
@@ -72,9 +76,8 @@ class Render_box(QFrame):
         
         self.roi_dor_direction = roi_dor_direction
         self.roi_dor_direction_boolean=roi_dor_direction_boolean
-        self.callback_save_roi = callback_save_roi
-        
-        self.smart_mode = False
+        self.callback_save_data = callback_save_data
+     
         self.process = None
         self.stop = False
         self.frames_per_milliseconds = frames_per_milliseconds
@@ -91,7 +94,20 @@ class Render_box(QFrame):
         
         self.setup_ui()
         
+        
+        if self.hwnd is not None and window_exists(self.hwnd):
+            
+            self.smart_mode
+            
+            self.get_hwnd_and_print(self.hwnd)
+            self.title = get_title(self.hwnd)
+            self.id_windows = int(hwnd)
+            
+            if self.socket.is_connected() and self.smart_mode:
+                self.init_loop()
+        
         hwndState.change_hwnd.connect(self.get_hwnd_and_print)
+        
         
         if self.socket is not None: self.socket.signal_inference.connect(self.on_text_message_received)
         
@@ -283,6 +299,7 @@ class Render_box(QFrame):
 
     def activate_modesmart(self):
         self.smart_mode = not self.smart_mode
+        self._save_all('inference_play', self.smart_mode)
         if self.smart_mode:
             self.btn_smart.setStyleSheet('background-color: #FF0000;')
             self.stop = False
@@ -314,6 +331,7 @@ class Render_box(QFrame):
         self.imagen_label.clear()
         self.imagen_label.setText("viewing window")
         self.can_send_next_frame = True  # Resetear bandera al detener
+        if callable(self.callback_save_data) : self.callback_save_data(self.index, 'hwnd', None)
         #self.close_socket()
         
 
@@ -469,6 +487,9 @@ class Render_box(QFrame):
                 self.id_windows = int(other_hwnd)
                 self.title = other_title
                 event.acceptProposedAction()
+                self.hwnd = self.id_windows
+                
+                if callable(self.callback_save_data): self.callback_save_data(self.index, 'hwnd', self.id_windows)
                 
                 ##if self.websocket is None: self.init_websocket() DEPRECATED
             else:
@@ -561,33 +582,29 @@ class Render_box(QFrame):
         """Manejador llamado cuando se recibe un mensaje de texto."""
         try:
             if message['component_key'] != self.component_key: return
-            
-            
-            for key in message['data']:
-               
 
+            for key in message['data']:
                 if(key == 'metadata'): 
                     for j in message['data'][key]:
-                        
                         if j == 'alerts':
                             list_alert = message['data'][key][j]
                             if len(list_alert) > 0 : 
                                 
                                 for iteration in list_alert:
+                                    ''''''
                                     image64 = iteration['image_base64']
                                     
                                     if image64 is None: 
                                         print('sin imagen')
                                         continue
                                     
-                                    title =  'Vehículo en el área (IA)'
-                                    if iteration['object_type'] == 'person': title = 'Persona en el área (IA)'
+                                    title = f'{iteration["class_name"]} en el área (IA)'
                                     response_image = self.api_jarvis.send_base64_image(image64)
                                     url_image = response_image[1]['url']
                                     
                                     if self.api_jarvis is not None:
-                                        pass
-                                        self.api_jarvis.send_alert_to_api(url_image = url_image, title=title, message=iteration['message'])
+                                        print(iteration['description'])
+                                        self.api_jarvis.send_alert_to_api(url_image = url_image, title=title, message=iteration['description'])
             
             data = message['data']
             
@@ -628,19 +645,22 @@ class Render_box(QFrame):
     def close_socket(self):
         self.socket.close()
         
-        
+
+    
+    def _save_all(self,  key, value):
+
+        if self.callback_save_data is not None: self.callback_save_data(self.index, key, value)
         
     def save_point(self, 
                     roi, roi_boolean, 
                     roi_door, roi_dor_boolean, 
                     roi_dor_direction, roi_dor_direction_boolean
                    ):
-        if self.callback_save_roi is not None: 
-                self.callback_save_roi(index=self.index, 
-                                        roi=roi, roi_boolean=roi_boolean, 
-                                        roi_door=roi_door, roi_dor_boolean=roi_dor_boolean, 
-                                        roi_dor_direction=roi_dor_direction, roi_dor_direction_boolean=roi_dor_direction_boolean
-                                    )
-            
-
-       
+        if self.callback_save_data is not None: 
+                self.callback_save_data(self.index, 'roi', roi)
+                self.callback_save_data(self.index, 'roi_boolean', roi_boolean)
+                self.callback_save_data(self.index, 'roi_door', roi_door)
+                self.callback_save_data(self.index, 'roi_dor_boolean', roi_dor_boolean)
+                self.callback_save_data(self.index, 'roi_dor_direction', roi_dor_direction)
+                self.callback_save_data(self.index, 'roi_dor_direction_boolean', roi_dor_direction_boolean)
+                

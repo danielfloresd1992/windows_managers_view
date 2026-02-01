@@ -77,12 +77,12 @@ class Jarvis_api(QObject):
                 'alertId': '6977974dfed1f0dcaffceefa',
                 'description': 'Alerta generada con IA',
                 'imageToShare': imageurl,
-                'menu': f"{self.selected_establishment['name']}\n{title}\n{message}",
+                'menu': f"*{self.selected_establishment['name']}*\n_{title}_\n{message}",
                 'imageUrl': [
                     {'url': imageurl, 'caption': 'alert'}
                 ]
             }
-            print(data)
+  
             response = self._request(resource='novelties', body=data, berb='post')
             response.finished.connect(lambda: self.__handler_response_alert(response))
         except Exception as e:
@@ -119,7 +119,7 @@ class Jarvis_api(QObject):
                 json_data = json.loads(data) 
                 print('User autenticated')
                 self.session_user = json_data
-                print(json_data)
+       
             except Exception:
                 print("Respuesta texto:", data)
              
@@ -152,7 +152,7 @@ class Jarvis_api(QObject):
             data = reply.readAll().data().decode()
             try:
                 json_data = json.loads(data)
-                print(json_data)
+       
             except Exception:
                 print("Respuesta texto:", data)
         else:
@@ -167,6 +167,7 @@ class Jarvis_api(QObject):
                 print("Error response text:", data)
             print("Error en la respuesta:", reply.errorString())
             self.error_request.emit('Error al enviar la alerta')
+
 
 
     def send_base64_image(self, base64_image: str, field_name: str = 'img', filename: str = 'image.jpg', timeout: int = 15000):

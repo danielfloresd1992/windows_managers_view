@@ -24,7 +24,7 @@ class Interactive_imageLabel(QLabel):
         # Normalizar nombres de entrada para compatibilidad con dicts
         # roi_active puede venir como 'roi_activate'
         roi_active_val = kwargs.get('roi_activate', roi_active)
-
+        
         # roi_door puede venir como 'door_roi' o 'roi_door'
         roi_door_val = roi_door if roi_door else kwargs.get('door_roi', kwargs.get('roi_door', []))
         roi_door_active_val = roi_door_active or kwargs.get('door_roi_activate', kwargs.get('door_roi_active', False))

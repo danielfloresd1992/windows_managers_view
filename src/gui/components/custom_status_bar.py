@@ -7,11 +7,21 @@ from .custon_btn.btn_footer import BtnIco
 
 class CustomStatusBar(QStatusBar):
     
+    
     inference_type_selected = Signal(str)
     
-    def __init__(self, list_establishment=[]):
+    
+    def __init__(self, 
+                list_establishment=[],
+                type_inference_default=None,
+                selected_establishment_default=None
+        ):
+        
         super().__init__(parent=None)
+        
         self.list_establishment =  list_establishment
+        self.selected_establishment_default=selected_establishment_default
+        self.type_inference_default=type_inference_default
         self.setup_ui()
         
         
@@ -31,6 +41,7 @@ class CustomStatusBar(QStatusBar):
         self.addPermanentWidget(container)
         
         
+        
         """______Lista de clientes_______"""
         if len(self.list_establishment) > 0:
             new_list = []
@@ -46,6 +57,15 @@ class CustomStatusBar(QStatusBar):
             self.container_layout.addWidget(self.selector_establishment)
             self.container_layout.addStretch()
             
+            if self.selected_establishment_default is not None:
+                
+                index_establishment = self.selector_establishment.findText(self.selected_establishment_default)
+                print(index_establishment)
+                if index_establishment != -1: self.selector_establishment.setCurrentIndex(index_establishment)
+            '''
+            type_inference_default=None,
+            selected_establishment_default=None
+            '''
         
         
         """____Indicador del server___"""
@@ -59,6 +79,13 @@ class CustomStatusBar(QStatusBar):
         
         self.layout_selector = QComboBox()
         self.layout_selector.addItems(['Seleccione...', 'Lavado', 'Perimetrales', 'PerimetralesMultiCam', 'Personal de Amazonas'])
+        
+        if self.type_inference_default is not None:
+            index_inference = self.layout_selector.findText(self.type_inference_default)
+            self.layout_selector.setCurrentIndex(index_inference)
+            self.layout_selector.setDisabled(True)
+            
+            
         self.layout_selector.currentTextChanged.connect(self._on_selector_changed)
         "inserción______⤵️_______"
         self.container_layout.addWidget(QLabel("Tipos de inferencias:")) # Etiqueta opcional
@@ -80,6 +107,7 @@ class CustomStatusBar(QStatusBar):
             self.inference_type_selected.emit(text)
             self.layout_selector.setDisabled(True)
         
+    
     
     
     @Slot(bool, str)

@@ -1,3 +1,4 @@
+from typing import Any
 from PySide6.QtWidgets import QApplication, QMainWindow,  QHBoxLayout, QWidget, QVBoxLayout, QLabel,QStatusBar, QPushButton, QSizePolicy, QGridLayout, QDialog, QTabWidget
 from PySide6.QtCore import Qt, QRect
 from PySide6.QtGui import QCursor, QIcon
@@ -8,6 +9,8 @@ from gui.components.custon_btn.btn_footer import BtnIco
 from gui.components.render_box.render_box import  Render_box
 from gui.components.custom_status_bar import CustomStatusBar
 from gui.components.device_list import DeviceListWidget
+
+
 
 
 
@@ -39,9 +42,9 @@ class MainWindow(QMainWindow):
          amount_renderbox = settingsModel.get('amount_renderbox'),
             data_box = settingsModel.get('boxs_config')
         '''
-        self.setup_ui()
-        self.socket = socket_service
         
+        self.socket = socket_service
+        self.setup_ui()
         self.socket.connected_signal.connect(self.footer_bar.update_ui)
         self.socket.disconnected_signal.connect(self.footer_bar.update_ui)
         self.socket.re_connect_signal.connect(self.footer_bar.receive_message)
@@ -53,12 +56,15 @@ class MainWindow(QMainWindow):
      #   self.centralWidget().setMouseTracking(True)
         for child in self.findChildren(QWidget):
             child.setMouseTracking(True)
-
+            
+        
         self.create_list_box()
-        
-        
         "inserción______⤵️_______"
         self.prerender_renderbox(self.amount_renderbox, add=True)
+        
+        index_principal_box = self.data_model_gui.get('principal_box', -1)
+        if index_principal_box > -1:
+            self.render_maxized_box(index_principal_box, True)
 
 
 
@@ -160,25 +166,48 @@ class MainWindow(QMainWindow):
         
         
         """____BARRA DE OPCIONES___"""
-        self.footer_bar = CustomStatusBar(list_establishment = self.jarvis_api.list_of_establishments)
+        last_inference = self.data_model_gui.get('last_inference', None)
+        selected_establishment = self.data_model_gui.get('selected_establishment', None)
+        
+        
+   
+            
+            
+            
+        self.footer_bar = CustomStatusBar(list_establishment = self.jarvis_api.list_of_establishments, type_inference_default=last_inference, selected_establishment_default=selected_establishment)
         self.footer_bar.btn_layout.clicked.connect(self.open_dialog)
         self.footer_bar.inference_type_selected.connect(self.socket_init)
         self.footer_bar.btn_stopconection.clicked.connect(self.socket_close)
         self.footer_bar.setStyleSheet("QStatusBar { background-color: #424242; color: white; }")
-        self.footer_bar.selector_establishment.currentTextChanged.connect(self.jarvis_api.selection_establishment)
+        if selected_establishment is not None: self.jarvis_api.selection_establishment(selected_establishment) # CARGA LOCAL MEMORIZADO
+        self.footer_bar.selector_establishment.currentTextChanged.connect(self.clicked_selection_establishment)
         "inserción______⤵️_______"
         self.window_child.setStatusBar(self.footer_bar)
         
+        if last_inference is not None: self.socket_init(last_inference)
         
+        
+            
+            
 
     def socket_init(self, parameter):
         self.socket.url = 'ws://72.68.60.171:9000/ws'
         self.socket.type_inference = parameter
         self.socket.conect_server()
+        self.data_model_gui.set('last_inference', parameter)
+        print('hola hola hola')
+        
+    
+    
+    def clicked_selection_establishment(self, text):
+        self.jarvis_api.selection_establishment(text)
+        self.data_model_gui.set('selected_establishment', text)
+    
     
     
     def socket_close(self):
         self.socket.disconnect_server()
+        self.data_model_gui.set('last_inference', None)
     
     
     def prerender_renderbox(self, amount: int = 2, add=False, callback=None, data=None):
@@ -233,7 +262,8 @@ class MainWindow(QMainWindow):
                 api_jarvis=None
             '''
             box_config = self.data_model_gui.get_box_config(i)
-            
+            hwnd = box_config['hwnd']
+            inferece_play = box_config['inference_play']
             roi = box_config['roi']
             roi_boolean = box_config['roi_boolean']
             
@@ -246,6 +276,8 @@ class MainWindow(QMainWindow):
             box = Render_box(
                             index=len(self.list_box), 
                             socket_services=self.socket, 
+                            hwnd=hwnd,
+                            inferece_play=inferece_play,
                             roi=roi, 
                             roi_boolean=roi_boolean,
                             
@@ -255,29 +287,33 @@ class MainWindow(QMainWindow):
                             roi_dor_direction=roi_dor_direction,
                             roi_dor_direction_boolean=roi_dor_direction_boolean,
                 
-                            callback_save_roi=self._save_data_render_box, 
+                            callback_save_data=self._save_data_render_box, 
                             api_jarvis=self.jarvis_api
                 )
 
-            box.double_clicked_signal.connect(self.render_maxized_box)
+            box.double_clicked_signal.connect(lambda index, isMaximised : self.handdler_dlouble_click(index, isMaximised))
             self.list_box.append(box)
         
         
+    def handdler_dlouble_click(self, index, isMaximised):
         
-    def _save_data_render_box(self, index, 
-                                        roi, roi_boolean,
-                                        roi_door, roi_dor_boolean, 
-                                        roi_dor_direction,  roi_dor_direction_boolean
-                                    ):
+        if isMaximised:
+            self.data_model_gui.set('principal_box', index)
+        else:
+            self.data_model_gui.set('principal_box', -1)
+        self.render_maxized_box(index, isMaximised)
+        
+
+        
+        
+               
+    def _save_data_render_box(self, index: int = -1, key: str = '', value: Any = None ) -> None:
         if self.data_model_gui is not None and hasattr(self.data_model_gui, 'update_box_config'):
-            self.data_model_gui.update_box_config(index, 'roi', roi)
-            self.data_model_gui.update_box_config(index, 'roi_boolean', roi_boolean)
-            self.data_model_gui.update_box_config(index, 'roi_door', roi_door)
-            self.data_model_gui.update_box_config(index, 'roi_dor_boolean', roi_dor_boolean)
-            self.data_model_gui.update_box_config(index, 'roi_dor_direction', roi_dor_direction)
-            self.data_model_gui.update_box_config(index, 'roi_dor_direction_boolean', roi_dor_direction_boolean)
+            self.data_model_gui.update_box_config(index, key, value)
+           
             self.data_model_gui.get_box_config(index)
         
+     
         
         
         

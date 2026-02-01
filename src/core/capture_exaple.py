@@ -86,9 +86,20 @@ def capture_window_by_hwnd(hwnd):
         print(f"💥 Error capturando ventana: {e}")
         return None
     
+    
+    
+    
+def window_exists(hwnd):
+    hwndDC = win32gui.GetWindowDC(hwnd)
+    if not hwndDC:
+        print("❌ No se pudo obtener el DC de la ventana")
+        return False
+    return True
 
 
-
+def get_title(hwnd = None):
+    if hwnd is None: return '' 
+    return win32gui.GetWindowText(hwnd)
 
 
 def pil_image_to_png_bytes(imagen_pil, format="PNG", quality=None):
