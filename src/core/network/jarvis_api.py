@@ -20,7 +20,7 @@ class Jarvis_api(QObject):
 
         self.session_user = None
         self.error_User = None
-        self.list_of_establishments = None
+        self.list_of_establishments = []
         self.selected_establishment = None
         
         self.manager_request = QNetworkAccessManager()
@@ -39,7 +39,8 @@ class Jarvis_api(QObject):
         for iteration in self.list_of_establishments:
             if iteration['name'] == name:
                 self.selected_establishment = iteration
-        print(self.selected_establishment)
+                print(f'{name} seleted by client')
+                break
     
     
     

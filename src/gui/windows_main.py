@@ -195,9 +195,8 @@ class MainWindow(QMainWindow):
         self.socket.type_inference = parameter
         self.socket.conect_server()
         self.data_model_gui.set('last_inference', parameter)
-        print('hola hola hola')
         
-    
+
     
     def clicked_selection_establishment(self, text):
         self.jarvis_api.selection_establishment(text)

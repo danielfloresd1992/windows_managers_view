@@ -18,7 +18,7 @@ class CustomStatusBar(QStatusBar):
         ):
         
         super().__init__(parent=None)
-        
+        print(list_establishment)
         self.list_establishment =  list_establishment
         self.selected_establishment_default=selected_establishment_default
         self.type_inference_default=type_inference_default
@@ -60,7 +60,6 @@ class CustomStatusBar(QStatusBar):
             if self.selected_establishment_default is not None:
                 
                 index_establishment = self.selector_establishment.findText(self.selected_establishment_default)
-                print(index_establishment)
                 if index_establishment != -1: self.selector_establishment.setCurrentIndex(index_establishment)
             '''
             type_inference_default=None,
@@ -78,7 +77,7 @@ class CustomStatusBar(QStatusBar):
         self.container_layout.addStretch()
         
         self.layout_selector = QComboBox()
-        self.layout_selector.addItems(['Seleccione...', 'Lavado', 'Perimetrales', 'PerimetralesMultiCam', 'Personal de Amazonas'])
+        self.layout_selector.addItems(['Seleccione...', 'Hummus','Lavado', 'Perimetrales', 'PerimetralesMultiCam', 'Personal de Amazonas'])
         
         if self.type_inference_default is not None:
             index_inference = self.layout_selector.findText(self.type_inference_default)
@@ -112,8 +111,6 @@ class CustomStatusBar(QStatusBar):
     
     @Slot(bool, str)
     def update_ui(self, is_connected, message):
-        
-        
         if is_connected:
             self.showMessage('Conexión establecida con el servidor', 3000)
             self.indicator.setStyleSheet('color: #4eff2b; font-weight: bold;')

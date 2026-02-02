@@ -94,7 +94,7 @@ class Render_box(QFrame):
         
         self.setup_ui()
         
-        
+        print(self.hwnd)
         if self.hwnd is not None and window_exists(self.hwnd):
             
             self.smart_mode

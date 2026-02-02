@@ -57,19 +57,15 @@ def main():
         settingsModel = SettingsModel()
         list_windows = open_windows_windows()
         
-        
         app = AppSingleton.initialize(sys.argv)
         app.setStyleSheet(load_stylesheet())
         
         jarvis_api = Jarvis_api(emailuser=email_jarvis, password=password_jarvis, url_api=url_api_jarvis)
-  
-  
+        
         socket_client = Socket_services()
         
-    
         splashScreen = SplashScreen()
         splashScreen.show()
-
         window_containter = MainWindow(
             socket_service=socket_client,
             jarvis_api=jarvis_api,
@@ -78,8 +74,6 @@ def main():
         
         windowsPrincipal = window_containter.window_child 
     
-        
-        
         asidebar = Sidebar_Dock(parent=None, title='Visión', src_ico='src/resources/ico.png')
         asidebar.print_list(list_windows)
         
