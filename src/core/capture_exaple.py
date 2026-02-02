@@ -91,6 +91,7 @@ def capture_window_by_hwnd(hwnd):
     
 def window_exists(hwnd):
     try:
+        if hwnd is None: return False
         hwndDC = win32gui.GetWindowDC(hwnd)
         if not hwndDC:
             print("❌ No se pudo obtener el DC de la ventana")
