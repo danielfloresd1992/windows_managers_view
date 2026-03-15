@@ -60,6 +60,7 @@ class Jarvis_api(QObject):
         
     def send_alert_to_api(self, url_image='https://amazona365.ddns.net/api_jarvis/v1/novelty/img=novelty_1769530415033.jpeg' , title='Alerta de perimetral', message='', params=None):
         try:
+            return None  #  CÓDIGO COMENTADO PARA EL ENVIOS DE ALERTAS
             if self.session_user is None:
                 self.error_request.emit('Error de sesión')
                 return None

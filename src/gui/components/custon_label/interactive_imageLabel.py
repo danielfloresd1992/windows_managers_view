@@ -52,7 +52,9 @@ class Interactive_imageLabel(QLabel):
         self.active_point_index = -1
         self.point_radius = 10
         self.current_pixmap = QPixmap()
-        self.hide_points()
+        # Respetar el estado inicial de roi_active en lugar de forzar hide
+        if not self.show_points:
+            self.hide_points()
 
     # ------------------------------------------------------------
     # CONTROL DE VISIBILIDAD DE PUNTOS

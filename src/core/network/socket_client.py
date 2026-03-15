@@ -23,6 +23,7 @@ class Socket_services(QObject):
         self.url = url
         self._manual_stop = False
         self.type_inference = type_inference
+        self.id_connection = None
         self.client = QWebSocket()
         self.client.connected.connect(self._on_connected)
         self.client.disconnected.connect(self._on_disconnected)
@@ -122,6 +123,9 @@ class Socket_services(QObject):
     def send_frame(self,component_key, frame_data):
         try:
             if component_key is None: raise ValueError('component_key o campos de frame_data son indefinidos')
+            if self.id_connection is None: 
+                print("⚠️ id_connection aún no asignado, esperando init del servidor...")
+                return
             
             data_to_send = {
                 'event': 'inference',
@@ -140,6 +144,9 @@ class Socket_services(QObject):
     def send_binary_frame(self, component_key, frame_data):
         try:
             if component_key is None: raise ValueError('component_key o campos de frame_data son indefinidos')
+            if self.id_connection is None: 
+                print("⚠️ id_connection aún no asignado, esperando init del servidor...")
+                return
             
             data_to_send = {
                 'event': 'inference',
@@ -162,7 +169,9 @@ class Socket_services(QObject):
         data = json.loads(message)   
      
         if data.get('event') is not None:
-            if data['event'] == 'conection_init': self.id_connection = data['id_connection']
+            if data['event'] == 'connection_init' or data['event'] == 'conection_init': 
+                self.id_connection = data['id_connection']
+                print(f"✅ ID de conexión recibido: {self.id_connection}")
             elif data['event'] == 'inference': 
                 self.signal_inference.emit(data)
 
@@ -174,7 +183,9 @@ class Socket_services(QObject):
             data = msgpack.unpackb(message, raw=False)
       
             if data.get('event') is not None:
-                if data['event'] == 'conection_init': self.id_connection = data['id_connection']
+                if data['event'] == 'connection_init' or data['event'] == 'conection_init': 
+                    self.id_connection = data['id_connection']
+                    print(f"✅ ID de conexión recibido (binary): {self.id_connection}")
                 elif data['event'] == 'inference': 
                     self.signal_inference.emit(data)
         except Exception as e:

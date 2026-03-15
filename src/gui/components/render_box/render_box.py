@@ -35,6 +35,7 @@ class Render_box(QFrame):
     
     double_clicked_signal = Signal(int, bool)
     roi_change_signal = Signal(list)
+    alert_received = Signal(dict)  # Señal para enviar alertas al sidebar
     
     def __init__(self, 
                 frames_per_milliseconds=100, 
@@ -387,6 +388,15 @@ class Render_box(QFrame):
                 self.text_fps.setText(f'Tasa de FPS: {self.current_fps}')
             
             if self.socket is not None:
+                # Auto-inicializar dimensiones desde el primer frame capturado
+                if self.image_w == 0 or self.image_h == 0:
+                    from PySide6.QtGui import QPixmap as _QPixmap
+                    _tmp = _QPixmap()
+                    _tmp.loadFromData(image_bytes, 'JPEG')
+                    if not _tmp.isNull():
+                        self.image_w = _tmp.width()
+                        self.image_h = _tmp.height()
+
                 # Mantén imagen como bytes (sin base64)
                 result_coordinates = self.imagen_label.get_coordinates(self.image_w, self.image_h)
                 door_coordinates = self.imagen_label.get_door_coordinates(self.image_w, self.image_h)
@@ -416,9 +426,14 @@ class Render_box(QFrame):
              
                     self.socket.send_binary_frame(self.component_key, data)
                     self.can_send_next_frame = False  # Bloquear envío hasta recibir respuesta
-                
-                elif not self.smart_mode:
-                    # Para mostrar localmente, usa bytes JPEG directamente
+
+                if self.smart_mode:
+                    # En modo smart, NO mostrar frames crudos; solo los procesados
+                    # que llegan desde on_text_message_received.
+                    # Seguir leyendo el buffer del QProcess para no acumular datos.
+                    self.loop_show_result()
+                else:
+                    # Sin modo smart, mostrar frames crudos normalmente
                     self.update_streaming_frame(image_bytes, type_image='jpeg_bytes', tets=True)
         
         except (msgpack.exceptions.ExtraData, ValueError, Exception) as e:
@@ -457,9 +472,13 @@ class Render_box(QFrame):
         except Exception as e:
             print(f"💥 Error update frame: {e}")
         finally:
+            # Solo continuar el loop recursivo cuando es frame local del QProcess (tets=True).
+            # Cuando viene del servidor (tets=False), el loop se reanuda desde
+            # on_text_message_received -> can_send_next_frame=True -> readyReadStandardOutput.
             if self.stop == True: 
                 print('Recurción finalizada')
-            elif self.stop == False: self.loop_show_result()
+            elif self.stop == False and tets: 
+                self.loop_show_result()
             
         
 
@@ -583,28 +602,57 @@ class Render_box(QFrame):
         try:
             if message['component_key'] != self.component_key: return
 
-            for key in message['data']:
-                if(key == 'metadata'): 
-                    for j in message['data'][key]:
-                        if j == 'alerts':
-                            list_alert = message['data'][key][j]
-                            if len(list_alert) > 0 : 
-                                
-                                for iteration in list_alert:
-                                    ''''''
-                                    image64 = iteration['image_base64']
-                                    
-                                    if image64 is None: 
-                                        print('sin imagen')
-                                        continue
-                                    
-                                    title = f'{iteration["class_name"]} en el área (IA)'
-                                    response_image = self.api_jarvis.send_base64_image(image64)
-                                    url_image = response_image[1]['url']
-                                    
-                                    if self.api_jarvis is not None:
-                                        print(iteration['description'])
-                                        self.api_jarvis.send_alert_to_api(url_image = url_image, title=title, message=iteration['description'])
+            metadata = message.get('data', {}).get('metadata', {})
+            if metadata:
+                # Buscar alertas en 'alerts' o 'events' (distintos procesadores usan nombres distintos)
+                list_alert = metadata.get('alerts', []) or []
+                
+                # Fallback: si no hay 'alerts' pero hay 'events' (ej. Hummus legacy)
+                if not list_alert:
+                    raw_events = metadata.get('events', []) or []
+                    for evt in raw_events:
+                        event_label = evt.get('event', '')
+                        display_name = {'order': 'Toma de orden', 'delivery': 'Entrega de plato'}.get(event_label, evt.get('event_type', event_label))
+                        list_alert.append({
+                            'event_type': display_name,
+                            'class_name': evt.get('class_name', display_name),
+                            'description': evt.get('description', f"{display_name} detectada"),
+                            'timestamp': evt.get('timestamp', ''),
+                            'crop_image': evt.get('crop_image', '') or evt.get('image_base64', '') or evt.get('screenshot_path', ''),
+                        })
+
+                for iteration in list_alert:
+                    # Normalizar campos
+                    event_type = iteration.get('event_type', 'Alerta')
+                    class_name = iteration.get('class_name', event_type)
+                    
+                    # Emitir alerta al sidebar
+                    alert_payload = {
+                        'event_type': event_type,
+                        'class_name': class_name,
+                        'description': iteration.get('description', ''),
+                        'timestamp': iteration.get('timestamp', ''),
+                        'crop_image': iteration.get('crop_image', '') or iteration.get('image_base64', ''),
+                        'camera_id': message.get('component_key', ''),
+                        'screenshot_path': iteration.get('screenshot_path', ''),
+                    }
+                    self.alert_received.emit(alert_payload)
+
+                    image64 = iteration.get('image_base64') or iteration.get('crop_image')
+                    
+                    if not image64: 
+                        continue
+                    
+                    try:
+                        title = f'{class_name} en el área (IA)'
+                        response_image = self.api_jarvis.send_base64_image(image64)
+                        url_image = response_image[1]['url']
+                        
+                        if self.api_jarvis is not None:
+                            print(iteration.get('description', ''))
+                            self.api_jarvis.send_alert_to_api(url_image=url_image, title=title, message=iteration.get('description', ''))
+                    except Exception as api_err:
+                        print(f'Error enviando alerta a API: {api_err}')
             
             data = message['data']
             

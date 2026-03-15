@@ -25,6 +25,7 @@ from gui.windows_main import MainWindow
 from gui.components.SplashScreen import SplashScreen
 from gui.components.render_box.render_box import Render_box
 from gui.components.sidebar.sidebar_dock import Sidebar_Dock
+from gui.components.sidebar.alerts_sidebar import AlertsSidebar
 from model.settings_model import SettingsModel
 
 ## rest ann straming
@@ -100,6 +101,32 @@ def main():
         dock.setFeatures(QDockWidget.NoDockWidgetFeatures)
         dock.setTitleBarWidget(QWidget())
         windowsPrincipal.addDockWidget(Qt.LeftDockWidgetArea, dock)  # lo acoplas a la izquierda
+
+
+        # ── Sidebar de Alertas IA (lado derecho) ──
+        alerts_sidebar = AlertsSidebar(parent=None, title='Alertas IA')
+        
+        dock_alerts = QDockWidget(None)
+        dock_alerts.setWidget(alerts_sidebar)
+        dock_alerts.setStyleSheet("""
+            QDockWidget::title {
+                padding: 0px;
+                margin: 0px;
+                spacing: 0px;
+                text-align: center;
+            }
+            QDockWidget::close-button, QDockWidget::float-button {
+                width: 0px;
+                height: 0px;
+            }
+        """)
+        dock_alerts.setFeatures(QDockWidget.NoDockWidgetFeatures)
+        dock_alerts.setTitleBarWidget(QWidget())
+        windowsPrincipal.addDockWidget(Qt.RightDockWidgetArea, dock_alerts)
+
+        # Conectar alertas de cada render_box al sidebar
+        for box in window_containter.list_box:
+            box.alert_received.connect(alerts_sidebar.add_alert)
     
         window_containter.show()
     
