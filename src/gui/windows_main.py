@@ -1,491 +1,351 @@
+"""
+src/gui/windows_main.py
+Ventana principal — integra la pestaña Dispositivos DVR.
+"""
 from typing import Any
-from PySide6.QtWidgets import QApplication, QMainWindow,  QHBoxLayout, QWidget, QVBoxLayout, QLabel,QStatusBar, QPushButton, QSizePolicy, QGridLayout, QDialog, QTabWidget
+from PySide6.QtWidgets import (
+    QApplication, QMainWindow, QHBoxLayout, QWidget, QVBoxLayout,
+    QLabel, QPushButton, QSizePolicy, QGridLayout, QDialog, QTabWidget,
+)
 from PySide6.QtCore import Qt, QRect
-from PySide6.QtGui import QCursor, QIcon
-
+from PySide6.QtGui  import QCursor, QIcon
 
 from gui.components.title_bar.window_bar import CustomTitleBar
 from gui.components.custon_btn.btn_footer import BtnIco
-from gui.components.render_box.render_box import  Render_box
+from gui.components.render_box.render_box import Render_box
 from gui.components.custom_status_bar import CustomStatusBar
-from gui.components.device_list import DeviceListWidget
 
-
-
+# ── DVR ──────────────────────────────────────────────────────
+from gui.components.device_panel import DevicePanel
 
 
 class MainWindow(QMainWindow):
 
-    MARGIN = 16  # margen sensible para detectar bordes
+    MARGIN = 16
 
-
-    def __init__(self, socket_service, jarvis_api=None, data_model_gui = None, amount_renderbox=2, data_box=None):
+    def __init__(self, socket_service, jarvis_api=None, data_model_gui=None,
+                 amount_renderbox=2, data_box=None):
         super().__init__()
-        
-        
-        # TODAS LAS INTERACIONES CON JARVIS OCURREN MEDIANTE ESTA CLASE  🔽
-        self.jarvis_api = jarvis_api                               #  jarvis_api
-        ########################################################################
-        
-        
-        
-        # variables internas para resize
-        self._resizing = False
+
+        self.jarvis_api     = jarvis_api
+        self._resizing      = False
         self._resize_direction = None
-        self._start_pos = None
-        self._start_geom = None
-        
-        self.list_box = []
-        self.amount_renderbox = data_model_gui.get('amount_renderbox')
-        self.data_model_gui = data_model_gui
-        '''
-         amount_renderbox = settingsModel.get('amount_renderbox'),
-            data_box = settingsModel.get('boxs_config')
-        '''
-        
-        self.socket = socket_service
+        self._start_pos     = None
+        self._start_geom    = None
+        self.list_box       = []
+        self.amount_renderbox = data_model_gui.get("amount_renderbox")
+        self.data_model_gui   = data_model_gui
+        self.socket           = socket_service
+
         self.setup_ui()
+
         self.socket.connected_signal.connect(self.footer_bar.update_ui)
         self.socket.disconnected_signal.connect(self.footer_bar.update_ui)
         self.socket.re_connect_signal.connect(self.footer_bar.receive_message)
-    
-       
 
-        # 🔑 activar mouse tracking en toda la jerarquía
         self.setMouseTracking(True)
-     #   self.centralWidget().setMouseTracking(True)
         for child in self.findChildren(QWidget):
             child.setMouseTracking(True)
-            
-        
+
         self.create_list_box()
-        "inserción______⤵️_______"
         self.prerender_renderbox(self.amount_renderbox, add=True)
-        
-        index_principal_box = self.data_model_gui.get('principal_box', -1)
+
+        index_principal_box = self.data_model_gui.get("principal_box", -1)
         if index_principal_box > -1:
             self.render_maxized_box(index_principal_box, True)
 
 
-
     def setup_ui(self):
-        self.setObjectName('MainWindowStyle')
+        self.setObjectName("MainWindowStyle")
         self.setAttribute(Qt.WA_StyledBackground, True)
         self.setWindowFlag(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
-        self.setContentsMargins(0,0,0,0)
+        self.setContentsMargins(0, 0, 0, 0)
         self.resize(1024, 768)
         self.center_windows()
-        
-        main_content = QWidget()
-        main_content.setContentsMargins(0,0,0,0)
-        self.layout_main = QVBoxLayout(main_content)
-        self.layout_main.setContentsMargins(0,0,0,0)
-        "inserción______⤵️_______"
-        self.setCentralWidget(main_content)
 
+        main_content = QWidget()
+        main_content.setContentsMargins(0, 0, 0, 0)
+        self.layout_main = QVBoxLayout(main_content)
+        self.layout_main.setContentsMargins(0, 0, 0, 0)
+        self.setCentralWidget(main_content)
 
         title_bar = CustomTitleBar(self)
         self.layout_main.addWidget(title_bar)
-        "inserción______⤵️_______"
-   
-   
+
         self.window_child = QMainWindow()
         self.window_child.setAttribute(Qt.WA_StyledBackground, True)
         self.window_child.setWindowFlag(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
-        "inserción______⤵️_______"
         self.layout_main.addWidget(self.window_child)
-        
-        
-        """______PESTAÑAS______"""
+
+        # ── Pestañas ─────────────────────────────────────────
         self.tabs = QTabWidget()
         self.tabs.setContentsMargins(0, 0, 0, 0)
         self.tabs.setAttribute(Qt.WA_StyledBackground, True)
         self.tabs.setStyleSheet("""
             QTabBar::tab {
-                /* 1. Fondo */
-                background: #292929; /* Color gris claro */
-                
-                /* 2. Borde */
-               
-                border-bottom: none; /* Quitamos el borde inferior para que se pegue al contenido */
-                border-top-left-radius: 4px; /* Esquinas superiores redondeadas */
-                border-top-right-radius: 4px;
-                
-                border-top: 1px solid #000000;
-                border-bottom: 1px solid #000000;
-                border-left: 1px solid #000000;
-                border-right: 1px solid #000000;
-                
-                /* 3. Espacio interno (Padding) */
-                padding: 8px 12px; /* Aumenta el alto y ancho de la pestaña */
-                
-                /* 4. Fuente */
-                color: #ffffff; /* Texto gris oscuro */
-                font-size: 10pt;
+                background:#292929; border-top-left-radius:4px;
+                border-top-right-radius:4px;
+                border:1px solid #000; padding:8px 12px;
+                color:#ffffff; font-size:10pt;
             }
-            
-            QTabBar::tab:selected{
-                border-bottom: 2px solid #00A8E8;
-            }
-            
-            QTabBar::tab:hover{
-                background: #363535;
-            }
-            
-            QTabWidget {
-                background-color: #000000;
-                border: 0;
-                padding: 0;
-            }
-        """)        
-        "inserción______⤵️_______"
+            QTabBar::tab:selected { border-bottom:2px solid #00A8E8; }
+            QTabBar::tab:hover    { background:#363535; }
+            QTabWidget            { background:#000; border:0; padding:0; }
+        """)
         self.window_child.setCentralWidget(self.tabs)
-        
-        
-        
-        """__________VIEW_________"""
+
+        # ── Pestaña: Smart Streaming ──────────────────────────
         content_box = QWidget()
-        content_box.setObjectName('TabContent')
+        content_box.setObjectName("TabContent")
         content_box.setAttribute(Qt.WA_StyledBackground, True)
         self.content_box_layout = QGridLayout(content_box)
         self.content_box_layout.setSpacing(0)
-        self.content_box_layout.setContentsMargins(0,0,0,0)
-       
-        "inserción______⤵️_______"
-        self.tabs.addTab(content_box, 'Smart Streaming')
-        
-        
-        
-        """PESTAÑA DE DISPOSITIVOS"""
-        content_box = QWidget()
-        device_list_widget = DeviceListWidget(self.data_model_gui)
-        layout_devices = QVBoxLayout(content_box)
-        layout_devices.addWidget(device_list_widget)
-        "inserción______⤵️_______"
-        self.tabs.addTab(content_box, 'Dispositivos')
-        
-        
-        """____BARRA DE OPCIONES___"""
-        last_inference = self.data_model_gui.get('last_inference', None)
-        selected_establishment = self.data_model_gui.get('selected_establishment', None)
-        
-        
-   
-            
-            
-            
-        self.footer_bar = CustomStatusBar(list_establishment = self.jarvis_api.list_of_establishments, type_inference_default=last_inference, selected_establishment_default=selected_establishment)
+        self.content_box_layout.setContentsMargins(0, 0, 0, 0)
+        self.tabs.addTab(content_box, "Smart Streaming")
+
+        # ── Pestaña: Dispositivos DVR ─────────────────────────
+        self.device_panel = DevicePanel()
+        self.device_panel.devices_updated.connect(self._on_devices_updated)
+        self.tabs.addTab(self.device_panel, "Dispositivos")
+
+        # ── Footer ────────────────────────────────────────────
+        last_inference         = self.data_model_gui.get("last_inference", None)
+        selected_establishment = self.data_model_gui.get("selected_establishment", None)
+
+        self.footer_bar = CustomStatusBar(
+            list_establishment             = self.jarvis_api.list_of_establishments,
+            type_inference_default         = last_inference,
+            selected_establishment_default = selected_establishment,
+        )
         self.footer_bar.btn_layout.clicked.connect(self.open_dialog)
         self.footer_bar.inference_type_selected.connect(self.socket_init)
         self.footer_bar.btn_stopconection.clicked.connect(self.socket_close)
-        self.footer_bar.setStyleSheet("QStatusBar { background-color: #424242; color: white; }")
-        if selected_establishment is not None: self.jarvis_api.selection_establishment(selected_establishment) # CARGA LOCAL MEMORIZADO
-        self.footer_bar.selector_establishment.currentTextChanged.connect(self.clicked_selection_establishment)
-        "inserción______⤵️_______"
+        self.footer_bar.setStyleSheet("QStatusBar { background-color:#424242; color:white; }")
+
+        if selected_establishment is not None:
+            self.jarvis_api.selection_establishment(selected_establishment)
+
+        # selector_establishment solo existe si hay establecimientos
+        if hasattr(self.footer_bar, "selector_establishment"):
+            self.footer_bar.selector_establishment.currentTextChanged.connect(
+                self.clicked_selection_establishment
+            )
+
         self.window_child.setStatusBar(self.footer_bar)
-        
-        if last_inference is not None: self.socket_init(last_inference)
-        
-        
-            
-            
+
+        if last_inference is not None:
+            self.socket_init(last_inference)
+
+
+    # ── DVR: actualizar sidebar cuando cambia la lista ────────
+
+    def _on_devices_updated(self):
+        """
+        Llamado cuando el usuario guarda o elimina un DVR.
+        Busca el Sidebar_Dock y le pide refrescar el DVRTree.
+        """
+        try:
+            from gui.components.sidebar.sidebar_dock import Sidebar_Dock
+            from PySide6.QtWidgets import QDockWidget
+            repo    = self.device_panel.get_repo()
+            devices = repo.all()
+            for dock in self.window_child.findChildren(QDockWidget):
+                sidebar = dock.widget()
+                if isinstance(sidebar, Sidebar_Dock):
+                    sidebar.refresh_dvr_tree(devices)
+                    break
+        except Exception as e:
+            print(f"[DVR] _on_devices_updated error: {e}")
+
+
+    # ── Socket ────────────────────────────────────────────────
 
     def socket_init(self, parameter):
-        self.socket.url = 'ws://72.68.60.171:9000/ws'
+        self.socket.url            = "ws://72.68.60.171:9000/ws"
         self.socket.type_inference = parameter
         self.socket.conect_server()
-        self.data_model_gui.set('last_inference', parameter)
-        
+        self.data_model_gui.set("last_inference", parameter)
 
-    
     def clicked_selection_establishment(self, text):
         self.jarvis_api.selection_establishment(text)
-        self.data_model_gui.set('selected_establishment', text)
-    
-    
-    
+        self.data_model_gui.set("selected_establishment", text)
+
     def socket_close(self):
         self.socket.disconnect_server()
-        self.data_model_gui.set('last_inference', None)
-    
-    
+        self.data_model_gui.set("last_inference", None)
+
+
+    # ── RenderBox ─────────────────────────────────────────────
+
     def prerender_renderbox(self, amount: int = 2, add=False, callback=None, data=None):
         try:
-            amount_box = 0
-            row = 0
-            if add == False: self._clear_layout_only()
+            amount_box = 0; row = 0
+            if not add:
+                self._clear_layout_only()
             while row < amount:
                 col = 0
                 while col < amount:
-                    box_seleted = self.list_box[amount_box]
-                    self.content_box_layout.addWidget(box_seleted, row, col)
-                    box_seleted.show()
-                    amount_box = amount_box + 1
-                    col = col + 1
-                row = row + 1
-                
-                if callable(callback): callback()
-                    
+                    box = self.list_box[amount_box]
+                    self.content_box_layout.addWidget(box, row, col)
+                    box.show()
+                    amount_box += 1; col += 1
+                row += 1
+                if callable(callback):
+                    callback()
         except Exception as e:
             print(e)
         finally:
-            if self.data_model_gui is not None and hasattr(self.data_model_gui, 'set'):
-                self.data_model_gui.set('amount_renderbox', amount)
-            
-    
-    
-    
+            if self.data_model_gui and hasattr(self.data_model_gui, "set"):
+                self.data_model_gui.set("amount_renderbox", amount)
+
     def render_maxized_box(self, index_box, maximized):
         for i in range(self.content_box_layout.count()):
-            if maximized: 
-                if index_box != i: self.list_box[i].hide()
-                continue
-            self.list_box[i].show()
-  
-  
-  
-            
-    def create_list_box(self, data=None):
+            if maximized:
+                if index_box != i:
+                    self.list_box[i].hide()
+            else:
+                self.list_box[i].show()
+
+    def create_list_box(self):
         for i in range(16):
-            '''
-            frames_per_milliseconds=100, 
-                index=0, 
-                roi = [[100,100],[900,100],[900,900],[100,900]] ,
-                activate_roi=False, 
-                roi_door = [],
-                roi_door_active= False,
-                dor_direction=[],
-                dor_direction_active=False
-                callback_save_roi = None,
-                socket_services = None,
-                api_jarvis=None
-            '''
-            box_config = self.data_model_gui.get_box_config(i)
-            hwnd = box_config['hwnd']
-            inferece_play = box_config['inference_play']
-            roi = box_config['roi']
-            roi_boolean = box_config['roi_boolean']
-            
-            roi_door = box_config['roi_door']
-            roi_dor_boolean = box_config['roi_dor_boolean']
-            
-            roi_dor_direction = box_config['roi_dor_direction']
-            roi_dor_direction_boolean =  box_config['roi_dor_direction_boolean']
-        
+            cfg = self.data_model_gui.get_box_config(i)
             box = Render_box(
-                            index=len(self.list_box), 
-                            socket_services=self.socket, 
-                            hwnd=hwnd,
-                            inferece_play=inferece_play,
-                            roi=roi, 
-                            roi_boolean=roi_boolean,
-                            
-                            roi_door = roi_door,
-                            roi_dor_boolean=roi_dor_boolean,
-                             
-                            roi_dor_direction=roi_dor_direction,
-                            roi_dor_direction_boolean=roi_dor_direction_boolean,
-                
-                            callback_save_data=self._save_data_render_box, 
-                            api_jarvis=self.jarvis_api
-                )
-
-            box.double_clicked_signal.connect(lambda index, isMaximised : self.handdler_dlouble_click(index, isMaximised))
+                index                      = len(self.list_box),
+                socket_services            = self.socket,
+                hwnd                       = cfg["hwnd"],
+                inferece_play              = cfg["inference_play"],
+                roi                        = cfg["roi"],
+                roi_boolean                = cfg["roi_boolean"],
+                roi_door                   = cfg["roi_door"],
+                roi_dor_boolean            = cfg["roi_dor_boolean"],
+                roi_dor_direction          = cfg["roi_dor_direction"],
+                roi_dor_direction_boolean  = cfg["roi_dor_direction_boolean"],
+                callback_save_data         = self._save_data_render_box,
+                api_jarvis                 = self.jarvis_api,
+            )
+            box.double_clicked_signal.connect(
+                lambda idx, isMx: self.handdler_dlouble_click(idx, isMx)
+            )
             self.list_box.append(box)
-        
-        
-    def handdler_dlouble_click(self, index, isMaximised):
-        
-        if isMaximised:
-            self.data_model_gui.set('principal_box', index)
-        else:
-            self.data_model_gui.set('principal_box', -1)
-        self.render_maxized_box(index, isMaximised)
-        
 
-        
-        
-               
-    def _save_data_render_box(self, index: int = -1, key: str = '', value: Any = None ) -> None:
-        if self.data_model_gui is not None and hasattr(self.data_model_gui, 'update_box_config'):
+    def handdler_dlouble_click(self, index, isMaximised):
+        self.data_model_gui.set("principal_box", index if isMaximised else -1)
+        self.render_maxized_box(index, isMaximised)
+
+    def _save_data_render_box(self, index: int = -1, key: str = "", value: Any = None):
+        if self.data_model_gui and hasattr(self.data_model_gui, "update_box_config"):
             self.data_model_gui.update_box_config(index, key, value)
-           
-            self.data_model_gui.get_box_config(index)
-        
-     
-        
-        
-        
+
     def _clear_layout_only(self):
         while self.content_box_layout.count():
-            item = self.content_box_layout.takeAt(0)
+            item   = self.content_box_layout.takeAt(0)
             widget = item.widget()
-            if widget is not None:
-                    # Lo ocultamos para que no se quede "flotando" en la esquina de la ventana
-                    widget.hide()
-                        # Opcional: desvincularlo totalmente del layout padre
-                    widget.setParent(None)
-        
-        
-        
-        
+            if widget:
+                widget.hide()
+                widget.setParent(None)
+
+
+    # ── Diálogo layout ────────────────────────────────────────
+
     def open_dialog(self):
         dlg = QDialog(parent=self)
-        dlg.setFixedHeight(180)
-        dlg.setFixedWidth(260)
-        dlg.setStyleSheet("QDialog { background-color: #424242; color: white; }")
-        dlg.setWindowFlags(Qt.Dialog | Qt.FramelessWindowHint)  # sin barra de título
-        dlg.setWindowFlags(dlg.windowFlags() | Qt.WindowStaysOnTopHint) 
-        
-        def close_dlg():
-            dlg.close()
-  
-        contain_layout = QVBoxLayout()
-        
-        title = QLabel('Divisiones de las ventanas')
-        title.setAlignment(Qt.AlignCenter)
-        contain_layout.addWidget(title)
-      
-        btn_one = BtnIco(ico_path='resource/1-.png', title='Una ventana principal', h=40, w=40)
-        btn_one.clicked.connect(lambda checked=False: self.prerender_renderbox(amount=1, add=False, callback=close_dlg))
- 
-        btn_quad = BtnIco(ico_path='resource/2x2-.png', title='2 X 2', h=40, w=40)
-        btn_quad.clicked.connect(lambda checked=False: self.prerender_renderbox(amount=2, add=False, callback=close_dlg))
-        
-        btn_nine = BtnIco(ico_path='resource/3x3-.png', title='9 X 9', h=40, w=40)
-        btn_nine.clicked.connect(lambda checked=False: self.prerender_renderbox(amount=3, add=False, callback=close_dlg))
-        
-        btn_max = BtnIco(ico_path='resource/4x4-.png', title='4 X 4', h=40, w=40)
-        btn_max.clicked.connect(lambda checked=False: self.prerender_renderbox(amount=4, add=False, callback=close_dlg))
-        
-        btn_layout = QHBoxLayout()
-        btn_layout.addStretch()
-        btn_layout.addWidget(btn_one)
-        btn_layout.addWidget(btn_quad)
-        btn_layout.addWidget(btn_nine)
-        btn_layout.addWidget(btn_max)
-        btn_layout.addStretch()
-        
-        contain_layout.addLayout(btn_layout, stretch=1)
-        contain_layout.setAlignment(Qt.AlignCenter)  # centra todo el contenido
+        dlg.setFixedSize(260, 180)
+        dlg.setStyleSheet("QDialog { background-color:#424242; color:white; }")
+        dlg.setWindowFlags(Qt.Dialog | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
 
-        btn_cancel = QPushButton('Cancelar')
+        def close_dlg(): dlg.close()
+
+        layout = QVBoxLayout()
+        layout.addWidget(QLabel("Divisiones de las ventanas", alignment=Qt.AlignCenter))
+
+        btn_row = QHBoxLayout()
+        btn_row.addStretch()
+        for amount, path, label in [
+            (1, "resource/1-.png",   "1x1"),
+            (2, "resource/2x2-.png", "2x2"),
+            (3, "resource/3x3-.png", "3x3"),
+            (4, "resource/4x4-.png", "4x4"),
+        ]:
+            b = BtnIco(ico_path=path, title=label, h=40, w=40)
+            b.clicked.connect(
+                lambda _, a=amount: self.prerender_renderbox(amount=a, add=False, callback=close_dlg)
+            )
+            btn_row.addWidget(b)
+        btn_row.addStretch()
+        layout.addLayout(btn_row, stretch=1)
+
+        btn_cancel = QPushButton("Cancelar")
         btn_cancel.setCursor(Qt.PointingHandCursor)
-        btn_cancel.setStyleSheet("""
-            QPushButton {
-                background-color: transparent;
-                border: none;
-                text-decoration: underline;
-                color: #ffffff
-            }             
-        """)
+        btn_cancel.setStyleSheet(
+            "QPushButton { background:transparent; border:none;"
+            " text-decoration:underline; color:#fff }"
+        )
         btn_cancel.clicked.connect(close_dlg)
-        contain_layout.addWidget(btn_cancel, alignment=Qt.AlignCenter)
-        dlg.setLayout(contain_layout)
+        layout.addWidget(btn_cancel, alignment=Qt.AlignCenter)
+        dlg.setLayout(layout)
         dlg.exec()
-            
-    
+
+
+    # ── Utilidades ────────────────────────────────────────────
 
     def center_windows(self):
-        screen = QApplication.primaryScreen()
-        screen_geometry = screen.availableGeometry()
-        x = (screen_geometry.width() - self.width()) // 2
-        y = (screen_geometry.height() - self.height()) // 2
-        self.move(x, y)
+        screen = QApplication.primaryScreen().availableGeometry()
+        self.move(
+            (screen.width()  - self.width())  // 2,
+            (screen.height() - self.height()) // 2,
+        )
 
 
+    # ── Redimensionamiento ────────────────────────────────────
 
-
-    # --------------------
-    # LÓGICA DE REDIMENSIONAMIENTO
-    # ---------------------------
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            self._start_pos = event.globalPosition().toPoint()
-            self._start_geom = self.geometry()
+            self._start_pos        = event.globalPosition().toPoint()
+            self._start_geom       = self.geometry()
             self._resize_direction = self._get_resize_direction(event.pos())
             if self._resize_direction:
                 self._resizing = True
 
-
-
-
     def mouseMoveEvent(self, event):
-        pos = event.pos()
         if not self._resizing:
-            self._update_cursor(pos)
+            self._update_cursor(event.pos())
         else:
             self._resize_window(event.globalPosition().toPoint())
-
-
-
 
     def mouseReleaseEvent(self, event):
         self._resizing = False
         self._resize_direction = None
 
-
-
-
     def _get_resize_direction(self, pos):
-        rect = self.rect()
-        x, y = pos.x(), pos.y()
-        margin = self.MARGIN
-        if x < margin and y < margin:
-            return 'top_left'
-        elif x > rect.width() - margin and y < margin:
-            return 'top_right'
-        elif x < margin and y > rect.height() - margin:
-            return 'bottom_left'
-        elif x > rect.width() - margin and y > rect.height() - margin:
-            return 'bottom_right'
-        elif x < margin:
-            return 'left'
-        elif x > rect.width() - margin:
-            return 'right'
-        elif y < margin:
-            return 'top'
-        elif y > rect.height() - margin:
-            return 'bottom'
+        x, y   = pos.x(), pos.y()
+        w, h   = self.width(), self.height()
+        m      = self.MARGIN
+        if   x < m and y < m:         return "top_left"
+        elif x > w-m and y < m:       return "top_right"
+        elif x < m and y > h-m:       return "bottom_left"
+        elif x > w-m and y > h-m:     return "bottom_right"
+        elif x < m:                    return "left"
+        elif x > w-m:                  return "right"
+        elif y < m:                    return "top"
+        elif y > h-m:                  return "bottom"
         return None
 
-
-
-
     def _update_cursor(self, pos):
-        direction = self._get_resize_direction(pos)
         cursors = {
-            'top_left': Qt.SizeFDiagCursor,
-            'bottom_right': Qt.SizeFDiagCursor,
-            'top_right': Qt.SizeBDiagCursor,
-            'bottom_left': Qt.SizeBDiagCursor,
-            'left': Qt.SizeHorCursor,
-            'right': Qt.SizeHorCursor,
-            'top': Qt.SizeVerCursor,
-            'bottom': Qt.SizeVerCursor,
+            "top_left":    Qt.SizeFDiagCursor, "bottom_right": Qt.SizeFDiagCursor,
+            "top_right":   Qt.SizeBDiagCursor, "bottom_left":  Qt.SizeBDiagCursor,
+            "left":        Qt.SizeHorCursor,   "right":        Qt.SizeHorCursor,
+            "top":         Qt.SizeVerCursor,   "bottom":       Qt.SizeVerCursor,
         }
-        self.setCursor(cursors.get(direction, Qt.ArrowCursor))
-
-
+        self.setCursor(cursors.get(self._get_resize_direction(pos), Qt.ArrowCursor))
 
     def _resize_window(self, global_pos):
         delta = global_pos - self._start_pos
-        geom = QRect(self._start_geom)
-        dir = self._resize_direction
-
-        if 'left' in dir:
-            geom.setLeft(geom.left() + delta.x())
-        if 'right' in dir:
-            geom.setRight(geom.right() + delta.x())
-        if 'top' in dir:
-            geom.setTop(geom.top() + delta.y())
-        if 'bottom' in dir:
-            geom.setBottom(geom.bottom() + delta.y())
-
-        # respetar tamaño mínimo
+        geom  = QRect(self._start_geom)
+        d     = self._resize_direction
+        if "left"   in d: geom.setLeft(geom.left()     + delta.x())
+        if "right"  in d: geom.setRight(geom.right()   + delta.x())
+        if "top"    in d: geom.setTop(geom.top()       + delta.y())
+        if "bottom" in d: geom.setBottom(geom.bottom() + delta.y())
         if geom.width() >= self.minimumWidth() and geom.height() >= self.minimumHeight():
             self.setGeometry(geom)
-            
-            
-            
-            

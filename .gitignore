@@ -1,6 +1,7 @@
 venv/
 src/native/build
 src/gui/__pycache__
+src/sdk
 src/gui/__pycache__/
 src/model/__pycache__/
 src/core/__pycache__/
