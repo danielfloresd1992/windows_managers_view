@@ -77,7 +77,7 @@ class CustomStatusBar(QStatusBar):
         self.container_layout.addStretch()
         
         self.layout_selector = QComboBox()
-        self.layout_selector.addItems(['Seleccione...', 'Hummus','Autolavado', 'Perimetrales', 'PerimetralesMultiCam', 'Personal de Amazonas', 'Misters'])
+        self.layout_selector.addItems(['Seleccione...', 'Hummus', 'HummusVLM', 'Autolavado', 'Perimetrales', 'PerimetralesMultiCam', 'Personal de Amazonas', 'Misters'])
         
         if self.type_inference_default is not None:
             index_inference = self.layout_selector.findText(self.type_inference_default)

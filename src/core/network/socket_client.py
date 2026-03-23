@@ -180,7 +180,7 @@ class Socket_services(QObject):
     @Slot(bytes)
     def on_binary_message_received(self, message):
         try:
-            data = msgpack.unpackb(message, raw=False)
+            data = msgpack.unpackb(message, raw=False, strict_map_key=False)
       
             if data.get('event') is not None:
                 if data['event'] == 'connection_init' or data['event'] == 'conection_init': 

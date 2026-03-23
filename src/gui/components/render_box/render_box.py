@@ -16,9 +16,9 @@ import msgpack
 
 from PySide6.QtWidgets import (
     QFrame, QWidget, QLabel, QHBoxLayout, QVBoxLayout,
-    QGridLayout, QSizePolicy,
+    QGridLayout, QSizePolicy, QMenu, QWidgetAction, QCheckBox,
 )
-from PySide6.QtCore  import Qt, Slot, QProcess, QUrl, Signal, QEvent
+from PySide6.QtCore  import Qt, Slot, QProcess, QUrl, Signal, QEvent, QBuffer, QIODevice
 from PySide6.QtWebSockets import QWebSocket
 from PySide6.QtGui   import QPixmap, QCursor, QImage
 
@@ -91,6 +91,20 @@ class Render_box(QFrame):
         self._rtsp_worker: RTSPWorker | None = None
         self._dvr_mode:    bool = False
 
+        # ── Clases COCO seleccionadas para tracking ──
+        # Mapa: nombre_display → class_id COCO
+        self._available_classes = {
+            "Persona":    0,
+            "Bicicleta":  1,
+            "Auto":       2,
+            "Moto":       3,
+            "Bus":        5,
+            "Camion":     7,
+            "Perro":     16,
+        }
+        # Por defecto solo persona activa
+        self._selected_classes = [0]
+
         self.setup_ui()
 
         if self.hwnd is not None and window_exists(self.hwnd):
@@ -156,30 +170,42 @@ class Render_box(QFrame):
         bar_opt_layout.setContentsMargins(10, 0, 10, 0)
         bar_opt_layout.setSpacing(5)
 
+        # ── Grupo IA ──
         self.btn_smart = BtnIco(ico_path="resource/mode_ai.png",
                                 title="Monitoreo inteligente", h=30, w=30)
-        self.btn_smart.setCursor(QCursor(Qt.PointingHandCursor))
         self.btn_smart.setObjectName("btn-bar")
         self.btn_smart.clicked.connect(self.activate_modesmart)
         self.btn_smart.setCheckable(True)
         self.btn_smart.setDisabled(True)
 
+        # ── Grupo ROI ──
         self.btn_perimeterroi = BtnIco(ico_path="resource/perimeter.png",
-                                       title="Perímetro inteligente", h=30, w=30)
-        self.btn_perimeterroi.setCursor(QCursor(Qt.PointingHandCursor))
+                                       title="Activar/Desactivar ROI", h=30, w=30)
         self.btn_perimeterroi.setCheckable(True)
         self.btn_perimeterroi.setObjectName("btn-bar")
         self.btn_perimeterroi.clicked.connect(self._hideandclear_roy)
 
+        # Botón para ocultar/mostrar puntos del ROI (sin desactivarlo)
+        self.btn_hide_points = BtnIco(ico_path="resource/layout.png",
+                                      title="Ocultar/Mostrar puntos ROI", h=30, w=30)
+        self.btn_hide_points.setCheckable(True)
+        self.btn_hide_points.setObjectName("btn-bar")
+        self.btn_hide_points.clicked.connect(self._toggle_points_visibility)
+
+        # ── Grupo Clases (selector de qué trackear) ──
+        self._btn_classes = BtnIco(ico_path="resource/camera_box.png",
+                                   title="Seleccionar clases a detectar", h=30, w=30)
+        self._btn_classes.setObjectName("btn-bar")
+        self._btn_classes.clicked.connect(self._show_class_menu)
+
+        # ── Grupo Controles de captura ──
         self.btn_cap = BtnIco(ico_path="resource/camera_box.png", title="Captura", h=30, w=30)
-        self.btn_cap.setCursor(QCursor(Qt.PointingHandCursor))
         self.btn_cap.setObjectName("btn-bar")
 
         btn_play  = BtnIco(ico_path="resource/play_box.png",  title="Iniciar", h=30, w=30)
         btn_pause = BtnIco(ico_path="resource/pause_box.png", title="Pausar",  h=30, w=30)
         btn_stop  = BtnIco(ico_path="resource/stop_box.png",  title="Parar",   h=30, w=30)
         for b in (btn_play, btn_pause, btn_stop):
-            b.setCursor(QCursor(Qt.PointingHandCursor))
             b.setObjectName("btn-bar")
 
         btn_play.clicked.connect(self.init_loop)
@@ -189,14 +215,27 @@ class Render_box(QFrame):
         # Botón detener DVR
         self._btn_stop_dvr = BtnIco(ico_path="resource/stop_box.png",
                                     title="Detener DVR", h=30, w=30)
-        self._btn_stop_dvr.setCursor(QCursor(Qt.PointingHandCursor))
         self._btn_stop_dvr.setObjectName("btn-bar")
         self._btn_stop_dvr.setToolTip("Detener stream DVR")
         self._btn_stop_dvr.clicked.connect(self._stop_dvr_stream)
         self._btn_stop_dvr.setVisible(False)
 
+        # ── Separador visual (línea vertical) ──
+        def _sep():
+            s = QFrame()
+            s.setFrameShape(QFrame.VLine)
+            s.setStyleSheet("color: #666;")
+            s.setFixedWidth(2)
+            s.setFixedHeight(20)
+            return s
+
+        # Layout: [IA | ROI HidePoints | Classes] --- [Capture Play Pause Stop DVR]
         bar_opt_layout.addWidget(self.btn_smart)
+        bar_opt_layout.addWidget(_sep())
         bar_opt_layout.addWidget(self.btn_perimeterroi)
+        bar_opt_layout.addWidget(self.btn_hide_points)
+        bar_opt_layout.addWidget(_sep())
+        bar_opt_layout.addWidget(self._btn_classes)
         bar_opt_layout.addStretch(1)
         bar_opt_layout.addWidget(self.btn_cap)
         bar_opt_layout.addWidget(btn_play)
@@ -213,7 +252,14 @@ class Render_box(QFrame):
     def start_dvr_stream(self, channel_data: dict):
         """Recibe datos del canal (drop) e inicia el RTSPWorker."""
         self._stop_dvr_stream()
-        self.detroy_loop()
+
+        # Detener captura HWND sin resetear estado de IA
+        if self.process is not None:
+            self.process.terminate()
+            if not self.process.waitForFinished(1000):
+                self.process.kill()
+            self.process = None
+        self.hwnd = None
 
         rtsp_url = channel_data.get("rtsp_main", "")
         if not rtsp_url:
@@ -227,6 +273,12 @@ class Render_box(QFrame):
         self._dvr_label.setVisible(True)
         self._btn_stop_dvr.setVisible(True)
         self._dvr_mode = True
+        self.stop = False
+        self.can_send_next_frame = True
+
+        # Habilitar boton IA si el socket esta conectado
+        if self.socket and self.socket.is_connected():
+            self.btn_smart.setEnabled(True)
 
         self._rtsp_worker = RTSPWorker(
             rtsp_url,
@@ -248,11 +300,56 @@ class Render_box(QFrame):
     def _on_dvr_frame(self, img: QImage):
         if not self._dvr_mode:
             return
+
         pix = QPixmap.fromImage(img)
         self.current_pixmap = pix
-        self.imagen_label.setPixmap(
-            pix.scaled(self.imagen_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        )
+        w, h = img.width(), img.height()
+        self.image_w = w
+        self.image_h = h
+
+        # FPS tracking
+        self.frame_count += 1
+        now = time.time()
+        if now - self.last_fps_time >= 1.0:
+            self.current_fps = self.frame_count
+            self.frame_count = 0
+            self.last_fps_time = now
+            prefix = "AI" if self.smart_mode else "DVR"
+            self.text_fps.setText(f"{prefix} FPS: {self.current_fps}")
+
+        # Si IA activa, enviar frame al servidor (solo mostrar respuesta del servidor)
+        if self.smart_mode and self.socket is not None and self.socket.is_connected():
+            if self.can_send_next_frame:
+                buf = QBuffer()
+                buf.open(QIODevice.WriteOnly)
+                img.save(buf, "JPEG", 80)
+                jpeg_bytes = bytes(buf.data())
+                buf.close()
+
+                roi_c  = self.imagen_label.get_coordinates(w, h)
+                door_c = self.imagen_label.get_door_coordinates(w, h)
+                dir_c  = self.imagen_label.get_door_direction_coordinates(w, h)
+
+                data = {
+                    "image": jpeg_bytes,
+                    "roi_coordinates": roi_c,
+                    "roi_activate": self.roi_boolean,
+                    "door_roi_coordinates": door_c,
+                    "door_roi_activate": self.roi_dor_boolean,
+                    "door_direction": dir_c,
+                    "door_direction_activate": self.roi_dor_direction_boolean,
+                    "camera_id": self.component_key,
+                    "track_classes": self._selected_classes,
+                }
+                self.socket.send_binary_frame(self.component_key, data)
+                self.can_send_next_frame = False
+            # No mostrar frame crudo — solo se muestra el frame del servidor
+            # via on_text_message_received → update_streaming_frame
+        else:
+            # Sin IA: mostrar frame crudo directamente
+            self.imagen_label.setPixmap(
+                pix.scaled(self.imagen_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            )
 
     def _stop_dvr_stream(self):
         if self._rtsp_worker and self._rtsp_worker.isRunning():
@@ -261,7 +358,11 @@ class Render_box(QFrame):
         self._dvr_mode     = False
         self._dvr_label.setVisible(False)
         self._btn_stop_dvr.setVisible(False)
-        self.text_fps.setText(f"FPS: 0")
+        self.smart_mode    = False
+        self.btn_smart.setChecked(False)
+        self.btn_smart.setStyleSheet("background-color:#BFBFBF;")
+        self.can_send_next_frame = True
+        self.text_fps.setText("FPS: 0")
 
 
     # ── Drag & Drop (ventana Windows + canal DVR) ─────────────
@@ -309,6 +410,42 @@ class Render_box(QFrame):
     def _hideandclear_roy(self):
         self.imagen_label.toggle_points()
         self.roi_boolean = not self.roi_boolean
+
+    def _toggle_points_visibility(self):
+        """Oculta/muestra los puntos del ROI sin desactivar el ROI."""
+        self.imagen_label.toggle_points_visibility()
+
+    def _show_class_menu(self):
+        """Muestra un menú popup con checkboxes para seleccionar qué clases detectar."""
+        menu = QMenu(self)
+        menu.setStyleSheet("""
+            QMenu { background: #2b2b2b; border: 1px solid #555; padding: 4px; }
+            QCheckBox { color: white; padding: 4px 8px; font-size: 12px; }
+            QCheckBox::indicator { width: 14px; height: 14px; }
+            QCheckBox::indicator:checked { background: #4CAF50; border: 1px solid #666; border-radius: 2px; }
+            QCheckBox::indicator:unchecked { background: #555; border: 1px solid #666; border-radius: 2px; }
+        """)
+
+        for name, class_id in self._available_classes.items():
+            cb = QCheckBox(name)
+            cb.setChecked(class_id in self._selected_classes)
+            cb.toggled.connect(lambda checked, cid=class_id: self._on_class_toggled(cid, checked))
+            action = QWidgetAction(menu)
+            action.setDefaultWidget(cb)
+            menu.addAction(action)
+
+        # Mostrar debajo del botón
+        btn_pos = self._btn_classes.mapToGlobal(self._btn_classes.rect().bottomLeft())
+        menu.exec(btn_pos)
+
+    def _on_class_toggled(self, class_id: int, checked: bool):
+        """Actualiza las clases seleccionadas para tracking."""
+        if checked and class_id not in self._selected_classes:
+            self._selected_classes.append(class_id)
+        elif not checked and class_id in self._selected_classes:
+            self._selected_classes.remove(class_id)
+        # Guardar en configuración persistente
+        self._save_all("track_classes", self._selected_classes[:])
 
     def init_loop(self):
         try:
@@ -380,7 +517,7 @@ class Render_box(QFrame):
         raw_data = self.process.readAllStandardOutput().data()
         if not raw_data: return
         try:
-            message     = msgpack.unpackb(raw_data, raw=False)
+            message     = msgpack.unpackb(raw_data, raw=False, strict_map_key=False)
             header      = message.get("header")
             image_bytes = message.get("image_bytes")
             if not header or not image_bytes: return
@@ -411,6 +548,7 @@ class Render_box(QFrame):
                     "door_roi_coordinates": door_c, "door_roi_activate": True,
                     "door_direction": dir_c,    "door_direction_activate": True,
                     "camera_id": self.component_key,
+                    "track_classes": self._selected_classes,
                 }
                 if self.smart_mode and self.can_send_next_frame:
                     self.socket.send_binary_frame(self.component_key, data)

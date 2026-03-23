@@ -33,8 +33,12 @@ class Interactive_imageLabel(QLabel):
         door_direction_val = dor_direction if dor_direction is not None else kwargs.get('door_direction', kwargs.get('dor_direction', []))
         door_direction_active_val = dor_direction_active or kwargs.get('door_direction_active', kwargs.get('dor_direction_active', False))
 
-        # Flag para mostrar/ocultar puntos (usa roi_active normalizado)
+        # Flag para mostrar/ocultar puntos VISUALMENTE (no afecta si el ROI está activo)
         self.show_points = bool(roi_active_val)
+        # Flag separada: los QPoints son editables/interactivos (se pueden arrastrar)
+        self.points_editable = True
+        # Flag para ocultar solo el dibujo de puntos/líneas sin desactivar el ROI
+        self.points_hidden = False
 
         # Puntos iniciales (0–1000)
         self.points = self.list_to_qpoints(roi)
@@ -69,6 +73,11 @@ class Interactive_imageLabel(QLabel):
 
     def toggle_points(self):
         self.show_points = not self.show_points
+        self.update()
+
+    def toggle_points_visibility(self):
+        """Oculta/muestra el dibujo de puntos y líneas SIN desactivar el ROI."""
+        self.points_hidden = not self.points_hidden
         self.update()
 
     # ------------------------------------------------------------
@@ -107,6 +116,10 @@ class Interactive_imageLabel(QLabel):
     # ------------------------------------------------------------
     def paintEvent(self, event):
         super().paintEvent(event)
+
+        # Si points_hidden está activo, no dibujar ningún overlay
+        if self.points_hidden:
+            return
 
         # Si los puntos están ocultos y no hay door features activas, no dibujar nada
         if not self.show_points and not (self.door_active or self.door_direction_active):
@@ -184,6 +197,9 @@ class Interactive_imageLabel(QLabel):
     # EVENTOS DEL MOUSE
     # ------------------------------------------------------------
     def mousePressEvent(self, event: QMouseEvent):
+        # Si los puntos están visualmente ocultos, no permitir interacción
+        if self.points_hidden:
+            return super().mousePressEvent(event)
         # Permitir interacción si: puntos visibles, o door activo/direction activo, o estamos editando door/direction
         if not self.show_points and not (self.door_active or self.door_direction_active or self.edit_target != 'roi'):
             return
@@ -222,6 +238,8 @@ class Interactive_imageLabel(QLabel):
 
 
     def mouseMoveEvent(self, event: QMouseEvent):
+        if self.points_hidden:
+            return super().mouseMoveEvent(event)
         if not self.show_points and not (self.door_active or self.door_direction_active or self.edit_target != 'roi'):
             return
         if self.active_point_index != -1 and event.buttons() & Qt.LeftButton:
@@ -244,6 +262,8 @@ class Interactive_imageLabel(QLabel):
 
 
     def mouseReleaseEvent(self, event: QMouseEvent):
+        if self.points_hidden:
+            return super().mouseReleaseEvent(event)
         if not self.show_points and not (self.door_active or self.door_direction_active or self.edit_target != 'roi'):
             return
         if event.button() == Qt.LeftButton and self.active_point_index != -1:
